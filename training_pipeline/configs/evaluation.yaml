@@ -1,0 +1,12 @@
+# configs/evaluation.yaml
+benchmarks:
+  - gsm8k
+  - hellaswag
+  - arc_easy
+  - mmlu_subset
+
+evaluation:
+  batch_size: 4
+  num_fewshot: 0
+  timeout: 1800
+  output_dir: "./eval_results"
