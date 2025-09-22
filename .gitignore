@@ -9,3 +9,7 @@ __pycache__/
 *.log
 
 .DS_Store
+
+unsloth_compiled_cache/
+*/wandb/
+*/outputs/

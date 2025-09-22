@@ -20,10 +20,10 @@ def test_pipeline():
     
     # Setup data config for testing
     data_config = DataConfig(
-        source="mongodb",  # or "json"
+        source="json",  # or "json"
         mongodb_uri="mongodb://localhost:27017/",
-        json_path="test_data.json",
-        test_size=20,  # Small test set
+        json_path="../data/exported_diary_data_1000.json",
+        test_size=1000,  # Small test set
         validation_split=0.2,
         max_length=1024
     )
@@ -56,8 +56,8 @@ def test_pipeline():
         logging.info(f"✅ Test training complete: {model_path}")
         
         # Test evaluation (skip for now in quick test)
-        # evaluator = ModelEvaluator({})
-        # evaluator.evaluate_model(model_path, f"test_{model_type}", ["gsm8k"])
+        evaluator = ModelEvaluator({})
+        evaluator.evaluate_model(model_path, f"test_{model_type}", ["gsm8k"])
     
     logging.info("🎉 Pipeline test successful!")
 

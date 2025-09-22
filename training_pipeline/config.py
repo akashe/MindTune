@@ -69,9 +69,9 @@ class ConfigManager:
         
         # Override for test mode
         if test_mode:
-            training_config.max_steps = 10
-            training_config.eval_steps = 5
-            training_config.save_steps = 5
-            training_config.logging_steps = 1
+            training_config.max_steps = 500
+            training_config.eval_steps = 100
+            training_config.save_steps = 100
+            training_config.logging_steps = 100
             
         return training_config

@@ -81,7 +81,7 @@ class ModelTrainer:
             logging_steps=self.training_config.logging_steps,
             save_steps=self.training_config.save_steps,
             eval_steps=self.training_config.eval_steps,
-            evaluation_strategy="steps",
+            eval_strategy="steps",
             save_strategy="steps",
             output_dir=output_dir,
             optim="adamw_8bit",

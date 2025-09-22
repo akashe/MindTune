@@ -1,12 +1,12 @@
 # configs/reasoning.yaml
 model:
   name: "reasoning"
-  base_model: "microsoft/DialoGPT-medium"  # Same base for fair comparison
+  base_model: "unsloth/llama-2-7b-bnb-4bit"  # Same base for fair comparison
   max_seq_length: 2048
   lora_r: 32  # Slightly higher for reasoning complexity
   lora_alpha: 16
   lora_dropout: 0.1
-  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 
 training:
   output_dir: "./outputs"
