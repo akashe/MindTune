@@ -61,7 +61,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "gsm8k",
-            "--batch_size", "20",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0",
             "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k"
         ]
@@ -91,7 +91,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "hellaswag",
-            "--batch_size", "20",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
         
@@ -111,7 +111,7 @@ class ModelEvaluator:
             "--model", "hf", 
             "--model_args", f"pretrained={model_path}",
             "--tasks", "arc_easy",
-            "--batch_size", "20",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
         
@@ -129,7 +129,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "mmlu_elementary_mathematics",
-            "--batch_size", "20",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
         
@@ -147,7 +147,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "social_iqa",
-            "--batch_size", "4",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
 
@@ -166,7 +166,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "truthfulqa_mc2",
-            "--batch_size", "16",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
 
@@ -185,7 +185,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "winogrande",
-            "--batch_size", "16",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
 
@@ -205,7 +205,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
-            "--batch_size", "8",
+            "--batch_size", "auto:3",
             "--num_fewshot", "0"
         ]
 
@@ -222,7 +222,7 @@ class ModelEvaluator:
                 "--model", "hf",
                 "--model_args", f"pretrained={model_path}",
                 "--tasks", "hendrycksTest-moral_scenarios",
-                "--batch_size", "16",
+                "--batch_size", "auto:3",
                 "--num_fewshot", "0"
             ]
 
