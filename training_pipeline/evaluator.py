@@ -11,6 +11,15 @@ class ModelEvaluator:
     def __init__(self, evaluation_config: Dict):
         self.config = evaluation_config
         self.results = {}
+
+    def _get_model_args(self, model_path: str) -> str:
+        """Get appropriate model arguments based on model type"""
+        if "/outputs/" in model_path or "final_model" in model_path:
+            # Fine-tuned model - load as-is without additional quantization
+            return f"pretrained={model_path},device_map=auto,torch_dtype=auto,trust_remote_code=True"
+        else:
+            # Base model - may need quantization for memory efficiency
+            return f"pretrained={model_path},device_map=auto"
     
     def evaluate_model(self, model_path: str, model_name: str, benchmarks: List[str]) -> Dict:
         """Evaluate model on specified benchmarks"""
@@ -59,7 +68,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path},load_in_4bit=True,device_map=auto",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "gsm8k",
             "--batch_size", "auto",
             "--num_fewshot", "0",
@@ -110,7 +119,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "hellaswag",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -147,7 +156,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "arc_easy",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -184,7 +193,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "mmlu_elementary_mathematics",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -221,7 +230,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "social_iqa",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -258,7 +267,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "truthfulqa_mc2",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -295,7 +304,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "winogrande",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
@@ -333,7 +342,7 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", self._get_model_args(model_path),
             "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
