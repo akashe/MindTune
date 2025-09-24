@@ -3,19 +3,49 @@ model:
   name: "reasoning"
   base_model: "unsloth/llama-2-7b-bnb-4bit"  # Same base for fair comparison
   max_seq_length: 2048
-  lora_r: 32  # Slightly higher for reasoning complexity
-  lora_alpha: 16
+  lora_r: 64  
+  lora_alpha: 32
   lora_dropout: 0.1
   target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+  use_cache: false
+  device_map: "auto"
+  trust_remote_code: true
+  attn_implementation: "auto"
+  dtype: null
 
 training:
   output_dir: "./outputs"
   max_steps: 500
-  learning_rate: 1e-4  # Slightly lower for reasoning training
-  batch_size: 2
-  gradient_accumulation_steps: 4
+  learning_rate: 0.0001  # Slightly lower for reasoning training
+  batch_size: 16
+  gradient_accumulation_steps: 1
   warmup_steps: 50
   logging_steps: 10
   save_steps: 100
   eval_steps: 100
   load_in_4bit: true
+  optim: "adamw_torch"
+  lr_scheduler_type: "linear"
+  weight_decay: 0.05                       # Higher weight decay for generalization
+  max_grad_norm: 0.5  
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  group_by_length: true                    # Important for varied reasoning lengths
+  remove_unused_columns: false
+  dataloader_drop_last: true
+  gradient_checkpointing: false            # Keep off for speed
+  fp16: null
+  bf16: null
+  use_gradient_checkpointing: false
+  evaluation_strategy: "steps"
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  run_name: null
+  seed: 42,
+  data_seed: 3407
+  report_to: "wandb"                    # Enable wandb
+  wandb_project: "finetune-my-diary"    # Your project name
+  wandb_entity: "akashe"                    # Your username (or null for default)
+  wandb_tags: ["non-reasoning", "diary", "personal-data"]
+  run_name: null 

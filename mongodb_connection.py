@@ -79,11 +79,13 @@ class DiaryDataManager:
             logging.error(f"❌ Failed to get stats: {e}")
             return {"total_examples": 0, "by_template": {}}
     
-    def export_to_json(self, output_file):
+    def export_to_json(self, output_file, data_size=None):
         """Export all data to JSON for training"""
         try:
             cursor = self.collection.find({}, {"_id": 0, "entry_hash": 0, "created_at": 0, "processed_at": 0})
             data = list(cursor)
+            if data_size:
+                data = data[:data_size]
             
             import json
             with open(output_file, 'w') as f:

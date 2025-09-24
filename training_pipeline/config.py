@@ -3,6 +3,8 @@ import yaml
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 import os
+import torch
+from utils import get_optimal_attention_implementation
 
 @dataclass
 class ModelConfig:
@@ -13,6 +15,11 @@ class ModelConfig:
     lora_alpha: int
     lora_dropout: float
     target_modules: List[str]
+    use_cache: bool = False
+    device_map: str = "auto"
+    trust_remote_code: bool = True
+    attn_implementation: str = "auto"  
+    dtype: Optional[str] = None  # "bfloat16", "float16", or None for auto
 
 @dataclass
 class TrainingConfig:
@@ -26,13 +33,45 @@ class TrainingConfig:
     save_steps: int
     eval_steps: int
     load_in_4bit: bool
+    # Optimizer settings
+    optim: str = "adamw_8bit"
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    
+    # Data loading optimization
+    dataloader_num_workers: int = 0
+    dataloader_pin_memory: bool = False
+    group_by_length: bool = False
+    remove_unused_columns: bool = True
+    dataloader_drop_last: bool = True
+    
+    # Memory and performance
+    gradient_checkpointing: bool = True
+    fp16: Optional[bool] = None  # None for auto-detection
+    bf16: Optional[bool] = None  # None for auto-detection
+    
+    # LoRA specific training settings  
+    use_gradient_checkpointing: str = "unsloth"  # or False
+    
+    # Evaluation settings
+    evaluation_strategy: str = "steps"
+    load_best_model_at_end: bool = True
+    metric_for_best_model: str = "eval_loss"
+    greater_is_better: bool = False
+    
+    # Reporting
+    report_to: str = "none"
+    wandb_project: Optional[str] = None
+    wandb_entity: Optional[str] = None
+    wandb_tags: Optional[List[str]] = None
+    run_name: Optional[str] = None
     
 @dataclass
 class DataConfig:
     source: str  # "mongodb" or "json"
     mongodb_uri: str
     json_path: str
-    test_size: int  # For pipeline testing
+    test_size: int  # For pipeline testing only
     validation_split: float
     max_length: int
 
@@ -57,7 +96,14 @@ class ConfigManager:
         config_file = os.path.join(self.config_dir, f"{model_type}.yaml")
         with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
-        return ModelConfig(**config['model'])
+        
+        model_config = ModelConfig(**config['model'])
+        
+        # Auto-detect attention implementation if set to "auto"
+        if model_config.attn_implementation == "auto":
+            model_config.attn_implementation = get_optimal_attention_implementation()
+        
+        return model_config
     
     def get_training_config(self, model_type: str, test_mode: bool = False) -> TrainingConfig:
         """Get training configuration, with test mode overrides"""
@@ -69,9 +115,9 @@ class ConfigManager:
         
         # Override for test mode
         if test_mode:
-            training_config.max_steps = 500
-            training_config.eval_steps = 100
-            training_config.save_steps = 100
-            training_config.logging_steps = 100
+            training_config.max_steps = 10
+            training_config.eval_steps = 5
+            training_config.save_steps = 5
+            training_config.logging_steps = 1
             
         return training_config
