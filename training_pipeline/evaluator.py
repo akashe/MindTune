@@ -17,7 +17,7 @@ class ModelEvaluator:
         if "/outputs/" in model_path or "merged_model" in model_path:
             # Check if merged model exists (faster evaluation)
             if os.path.exists(model_path):
-                logging.info(f"🚀 Using merged model for faster evaluation: {merged_path}")
+                logging.info(f"🚀 Using merged model for faster evaluation: {model_path}")
                 return f"pretrained={model_path},device_map=auto,trust_remote_code=True"
 
             # Fallback to PEFT adapter loading
