@@ -55,7 +55,7 @@ class ModelEvaluator:
     
     def _evaluate_gsm8k(self, model_path: str) -> float:
         """Evaluate on GSM8K math reasoning"""
-        
+
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
@@ -63,80 +63,156 @@ class ModelEvaluator:
             "--tasks", "gsm8k",
             "--batch_size", "auto:3",
             "--num_fewshot", "0",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k"
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k",
+            "--verbosity", "DEBUG"
         ]
-        
+
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
-            
-            # Parse results from output
+            # Stream output in real-time
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            # Stream output line by line
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())  # Print to terminal
+                output_lines.append(line)
+
+            process.wait(timeout=1800)
+
+            # Parse results from output file
             output_file = f"eval_results_{os.path.basename(model_path)}_gsm8k/results.json"
             if os.path.exists(output_file):
                 with open(output_file, 'r') as f:
                     results = json.load(f)
                 return results.get('results', {}).get('gsm8k', {}).get('acc', 0.0)
-            
+
         except subprocess.TimeoutExpired:
             logging.error("GSM8K evaluation timed out")
+            if process:
+                process.kill()
         except Exception as e:
             logging.error(f"GSM8K evaluation failed: {e}")
-        
+
         return 0.0
     
     def _evaluate_hellaswag(self, model_path: str) -> float:
         """Evaluate on HellaSwag common sense reasoning"""
-        
+
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "hellaswag",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
-        
+
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            # Parse accuracy from output
-            # Implementation depends on lm-eval output format
-            return self._parse_accuracy_from_output(result.stdout, "hellaswag")
-        except:
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "hellaswag")
+        except Exception as e:
+            logging.error(f"HellaSwag evaluation failed: {e}")
             return 0.0
     
     def _evaluate_arc_easy(self, model_path: str) -> float:
         """Evaluate on ARC-Easy"""
-        
+
         cmd = [
             "python", "-m", "lm_eval",
-            "--model", "hf", 
+            "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "arc_easy",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
-        
+
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            return self._parse_accuracy_from_output(result.stdout, "arc_easy")
-        except:
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "arc_easy")
+        except Exception as e:
+            logging.error(f"ARC-Easy evaluation failed: {e}")
             return 0.0
     
     def _evaluate_mmlu_subset(self, model_path: str) -> float:
         """Evaluate on MMLU subset (elementary math)"""
-        
+
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "mmlu_elementary_mathematics",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
-        
+
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            return self._parse_accuracy_from_output(result.stdout, "mmlu_elementary_mathematics")
-        except:
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "mmlu_elementary_mathematics")
+        except Exception as e:
+            logging.error(f"MMLU evaluation failed: {e}")
             return 0.0
 
     def _evaluate_social_iqa(self, model_path: str) -> float:
@@ -148,14 +224,32 @@ class ModelEvaluator:
             "--model_args", f"pretrained={model_path}",
             "--tasks", "social_iqa",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            return self._parse_accuracy_from_output(result.stdout, "social_iqa")
-        except:
-            logging.error("SocialIQA evaluation failed")
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "social_iqa")
+        except Exception as e:
+            logging.error(f"SocialIQA evaluation failed: {e}")
             return 0.0
 
     def _evaluate_truthfulqa(self, model_path: str) -> float:
@@ -167,14 +261,32 @@ class ModelEvaluator:
             "--model_args", f"pretrained={model_path}",
             "--tasks", "truthfulqa_mc2",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
-            return self._parse_accuracy_from_output(result.stdout, "truthfulqa_mc2")
-        except:
-            logging.error("TruthfulQA evaluation failed")
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1800)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "truthfulqa_mc2")
+        except Exception as e:
+            logging.error(f"TruthfulQA evaluation failed: {e}")
             return 0.0
 
     def _evaluate_winogrande(self, model_path: str) -> float:
@@ -186,14 +298,32 @@ class ModelEvaluator:
             "--model_args", f"pretrained={model_path}",
             "--tasks", "winogrande",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            return self._parse_accuracy_from_output(result.stdout, "winogrande")
-        except:
-            logging.error("Winogrande evaluation failed")
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "winogrande")
+        except Exception as e:
+            logging.error(f"Winogrande evaluation failed: {e}")
             return 0.0
 
     def _evaluate_hhh_eval(self, model_path: str) -> float:
@@ -206,12 +336,30 @@ class ModelEvaluator:
             "--model_args", f"pretrained={model_path}",
             "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
             "--batch_size", "auto:3",
-            "--num_fewshot", "0"
+            "--num_fewshot", "0",
+            "--verbosity", "DEBUG"
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=2400)
-            return self._parse_accuracy_from_output(result.stdout, "unitxt")
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=2400)
+
+            return self._parse_accuracy_from_output(''.join(output_lines), "unitxt")
         except Exception as e:
             logging.error(f"HH-RLHF evaluation failed: {e}")
             logging.warning("Falling back to ethics proxy evaluation")
@@ -223,13 +371,32 @@ class ModelEvaluator:
                 "--model_args", f"pretrained={model_path}",
                 "--tasks", "hendrycksTest-moral_scenarios",
                 "--batch_size", "auto:3",
-                "--num_fewshot", "0"
+                "--num_fewshot", "0",
+                "--verbosity", "DEBUG"
             ]
 
             try:
-                fallback_result = subprocess.run(fallback_cmd, capture_output=True, text=True, timeout=1200)
-                return self._parse_accuracy_from_output(fallback_result.stdout, "hendrycksTest-moral_scenarios")
-            except:
+                logging.info(f"Running fallback command: {' '.join(fallback_cmd)}")
+
+                fallback_process = subprocess.Popen(
+                    fallback_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
+
+                fallback_output_lines = []
+                for line in fallback_process.stdout:
+                    print(line.strip())
+                    fallback_output_lines.append(line)
+
+                fallback_process.wait(timeout=1200)
+
+                return self._parse_accuracy_from_output(''.join(fallback_output_lines), "hendrycksTest-moral_scenarios")
+            except Exception as fallback_e:
+                logging.error(f"Fallback evaluation failed: {fallback_e}")
                 return 0.0
 
     def _parse_accuracy_from_output(self, output: str, task: str) -> float:
