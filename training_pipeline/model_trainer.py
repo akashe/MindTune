@@ -171,15 +171,48 @@ class ModelTrainer:
         final_model_path = os.path.join(output_dir, "final_model")
         trainer.save_model(final_model_path)
         self.tokenizer.save_pretrained(final_model_path)
-        
+
         logging.info(f"✅ Training complete. Model saved to: {final_model_path}")
-        
+
+        # Cleanup GPU memory
+        self._cleanup_gpu_memory(trainer)
+
         # Cleanup wandb
         if report_to != "none":
             try:
                 wandb.finish()
             except:
                 pass
-        
+
         return final_model_path
+
+    def _cleanup_gpu_memory(self, trainer=None):
+        """Clean up GPU memory after training"""
+        import gc
+
+        try:
+            # Delete trainer and model references
+            if trainer is not None:
+                del trainer
+
+            if self.model is not None:
+                del self.model
+                self.model = None
+
+            if self.tokenizer is not None:
+                del self.tokenizer
+                self.tokenizer = None
+
+            # Force garbage collection
+            gc.collect()
+
+            # Clear CUDA cache
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+
+            logging.info("🧹 GPU memory cleaned up")
+
+        except Exception as e:
+            logging.warning(f"⚠️ GPU cleanup warning: {e}")
     

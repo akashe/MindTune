@@ -100,7 +100,10 @@ class ExperimentPipeline:
             
             trained_models[model_type] = model_path
             logging.info(f"✅ {model_type} training complete: {model_path}")
-        
+
+            # Clean up GPU memory between models
+            self._cleanup_gpu_memory()
+
         return trained_models
     
     def _evaluate_models(self, trained_models: Dict[str, str]) -> Dict:
@@ -121,7 +124,26 @@ class ExperimentPipeline:
             evaluator.evaluate_model(model_path, model_name, benchmarks)
         
         return evaluator.results
-    
+
+    def _cleanup_gpu_memory(self):
+        """Clean up GPU memory between operations"""
+        import gc
+        import torch
+
+        try:
+            # Force garbage collection
+            gc.collect()
+
+            # Clear CUDA cache
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+
+            logging.info("🧹 Pipeline GPU memory cleaned")
+
+        except Exception as e:
+            logging.warning(f"⚠️ Pipeline GPU cleanup warning: {e}")
+
     def _generate_final_report(self, results: Dict):
         """Generate and save final experiment report"""
         
