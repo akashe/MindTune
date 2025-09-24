@@ -59,9 +59,9 @@ class ModelEvaluator:
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
-            "--model_args", f"pretrained={model_path}",
+            "--model_args", f"pretrained={model_path},load_in_4bit=True,device_map=auto",
             "--tasks", "gsm8k",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
             "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k",
             "--verbosity", "DEBUG"
