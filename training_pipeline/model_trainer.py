@@ -129,6 +129,7 @@ class ModelTrainer:
             eval_strategy=self.training_config.evaluation_strategy,
             save_strategy=self.training_config.save_strategy,
             save_only_model=self.training_config.save_only_model,
+            save_total_limit=self.training_config.save_total_limit,
             metric_for_best_model=self.training_config.metric_for_best_model,
             greater_is_better=self.training_config.greater_is_better,
             load_best_model_at_end=self.training_config.load_best_model_at_end,

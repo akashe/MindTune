@@ -59,6 +59,7 @@ class TrainingConfig:
     load_best_model_at_end: bool = True
     save_only_model: bool = True
     save_strategy: str = "no"
+    save_total_limit: int = 1  
     metric_for_best_model: str = "eval_loss"
     greater_is_better: bool = False
     
