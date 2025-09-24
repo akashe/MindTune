@@ -1,0 +1,26 @@
+experiment:
+  name: "diary_social_reasoning_evaluation"
+  models_to_train: ["non_reasoning", "reasoning"]
+  benchmarks_to_run: ["social_iqa", "truthfulqa", "winogrande"]
+  save_results_to: "./social_reasoning_results"
+
+# Data configuration
+data:
+  source: "json"
+  mongodb_uri: "mongodb://localhost:27017/"
+  json_path: "../data/exported_diary_data_1000.json"
+  test_size: 50
+  validation_split: 0.2
+  max_length: 2048
+
+# Evaluation configuration
+evaluation:
+  batch_size: 2  # Smaller batch size for more complex tasks
+  num_fewshot: 0
+  timeout: 2400  # Longer timeout for complex reasoning tasks
+  output_dir: "./social_eval_results"
+
+wandb:
+  project: "finetune-my-diary"
+  entity: "akashe"
+  tags: ["diary", "social-reasoning", "emotional-intelligence"]

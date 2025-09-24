@@ -31,6 +31,14 @@ class ModelEvaluator:
                     score = self._evaluate_arc_easy(model_path)
                 elif benchmark == "mmlu_subset":
                     score = self._evaluate_mmlu_subset(model_path)
+                elif benchmark == "social_iqa":
+                    score = self._evaluate_social_iqa(model_path)
+                elif benchmark == "truthfulqa":
+                    score = self._evaluate_truthfulqa(model_path)
+                elif benchmark == "winogrande":
+                    score = self._evaluate_winogrande(model_path)
+                elif benchmark == "hhh_eval":
+                    score = self._evaluate_hhh_eval(model_path)
                 else:
                     logging.warning(f"⚠️  Unknown benchmark: {benchmark}")
                     continue
@@ -130,7 +138,85 @@ class ModelEvaluator:
             return self._parse_accuracy_from_output(result.stdout, "mmlu_elementary_mathematics")
         except:
             return 0.0
-    
+
+    def _evaluate_social_iqa(self, model_path: str) -> float:
+        """Evaluate on SocialIQA for social reasoning"""
+
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", f"pretrained={model_path}",
+            "--tasks", "social_iqa",
+            "--batch_size", "4",
+            "--num_fewshot", "0"
+        ]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
+            return self._parse_accuracy_from_output(result.stdout, "social_iqa")
+        except:
+            logging.error("SocialIQA evaluation failed")
+            return 0.0
+
+    def _evaluate_truthfulqa(self, model_path: str) -> float:
+        """Evaluate on TruthfulQA for truthfulness"""
+
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", f"pretrained={model_path}",
+            "--tasks", "truthfulqa_mc2",
+            "--batch_size", "2",
+            "--num_fewshot", "0"
+        ]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+            return self._parse_accuracy_from_output(result.stdout, "truthfulqa_mc2")
+        except:
+            logging.error("TruthfulQA evaluation failed")
+            return 0.0
+
+    def _evaluate_winogrande(self, model_path: str) -> float:
+        """Evaluate on Winogrande for commonsense reasoning"""
+
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", f"pretrained={model_path}",
+            "--tasks", "winogrande",
+            "--batch_size", "8",
+            "--num_fewshot", "0"
+        ]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
+            return self._parse_accuracy_from_output(result.stdout, "winogrande")
+        except:
+            logging.error("Winogrande evaluation failed")
+            return 0.0
+
+    def _evaluate_hhh_eval(self, model_path: str) -> float:
+        """Evaluate on HHH (Helpful, Harmless, Honest) alignment"""
+
+        # Note: HHH eval might require special setup or custom implementation
+        # This is a placeholder - you may need to use a different evaluation framework
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", f"pretrained={model_path}",
+            "--tasks", "hendrycksTest-moral_scenarios",  # Using MMLU moral scenarios as proxy
+            "--batch_size", "4",
+            "--num_fewshot", "0"
+        ]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
+            return self._parse_accuracy_from_output(result.stdout, "hendrycksTest-moral_scenarios")
+        except:
+            logging.warning("HHH eval not available, using moral scenarios proxy")
+            return 0.0
+
     def _parse_accuracy_from_output(self, output: str, task: str) -> float:
         """Parse accuracy from lm-eval output"""
         
