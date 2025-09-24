@@ -49,7 +49,6 @@ class ModelTrainer:
             lora_alpha=self.model_config.lora_alpha,
             lora_dropout=self.model_config.lora_dropout,
             bias="none",
-            use_gradient_checkpointing="unsloth",
             use_gradient_checkpointing=self.training_config.use_gradient_checkpointing,
             random_state=3407,
         )
@@ -146,6 +145,7 @@ class ModelTrainer:
             dataloader_drop_last=self.training_config.dataloader_drop_last,
             report_to=report_to,
             run_name=final_run_name if report_to == "wandb" else None,
+            prediction_loss_only=True
         )
         
         # Setup trainer

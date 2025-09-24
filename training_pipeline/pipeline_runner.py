@@ -1,10 +1,12 @@
 # pipeline_runner.py
 import argparse
 import logging
-import os
+import os, sys
 import yaml
 from datetime import datetime
 from typing import Dict, List
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data_manager import DataManager, DataConfig
 from model_trainer import ModelTrainer
@@ -66,7 +68,7 @@ class ExperimentPipeline:
         
         data_config = DataConfig(**self.config['data'])
         if self.test_mode:
-            data_config.test_size = 20  # Small test set
+            data_config.test_size = 600  # Small test set
         
         data_manager = DataManager(data_config)
         datasets = data_manager.prepare_datasets(test_mode=self.test_mode)

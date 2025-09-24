@@ -6,11 +6,11 @@ experiment:
 
 # THIS WAS MISSING - Data configuration
 data:
-  source: "mongodb"  # or "json"
+  source: "json"  # or "json"
   mongodb_uri: "mongodb://localhost:27017/"
-  json_path: "diary_training_data.json"
+  json_path: "../data/exported_diary_data_1000.json"
   test_size: 50
-  validation_split: 0.1
+  validation_split: 0.2
   max_length: 2048
 
 # Evaluation configuration  

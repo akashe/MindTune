@@ -53,7 +53,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "gsm8k",
-            "--batch_size", "4",
+            "--batch_size", "8",
             "--num_fewshot", "0",
             "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k"
         ]
@@ -83,7 +83,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "hellaswag",
-            "--batch_size", "4",
+            "--batch_size", "8",
             "--num_fewshot", "0"
         ]
         
@@ -103,7 +103,7 @@ class ModelEvaluator:
             "--model", "hf", 
             "--model_args", f"pretrained={model_path}",
             "--tasks", "arc_easy",
-            "--batch_size", "4",
+            "--batch_size", "8",
             "--num_fewshot", "0"
         ]
         
@@ -121,7 +121,7 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
             "--tasks", "mmlu_elementary_mathematics",
-            "--batch_size", "4",
+            "--batch_size", "8",
             "--num_fewshot", "0"
         ]
         

@@ -37,6 +37,7 @@ class TrainingConfig:
     optim: str = "adamw_8bit"
     weight_decay: float = 0.01
     max_grad_norm: float = 1.0
+    lr_scheduler_type: str = "linear"
     
     # Data loading optimization
     dataloader_num_workers: int = 0
@@ -65,6 +66,10 @@ class TrainingConfig:
     wandb_entity: Optional[str] = None
     wandb_tags: Optional[List[str]] = None
     run_name: Optional[str] = None
+
+    # seeds
+    seed: int = 42
+    data_seed: int = 3407
     
 @dataclass
 class DataConfig:
