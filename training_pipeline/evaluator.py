@@ -197,25 +197,40 @@ class ModelEvaluator:
             return 0.0
 
     def _evaluate_hhh_eval(self, model_path: str) -> float:
-        """Evaluate on HHH (Helpful, Harmless, Honest) alignment"""
+        """Evaluate on HHH (Helpful, Harmless, Honest) using Unitxt HH-RLHF"""
 
-        # Note: HHH eval might require special setup or custom implementation
-        # This is a placeholder - you may need to use a different evaluation framework
+        # Use Unitxt's HH-RLHF evaluation through lm_eval
         cmd = [
             "python", "-m", "lm_eval",
             "--model", "hf",
             "--model_args", f"pretrained={model_path}",
-            "--tasks", "hendrycksTest-moral_scenarios",  # Using MMLU moral scenarios as proxy
-            "--batch_size", "4",
+            "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
+            "--batch_size", "2",
             "--num_fewshot", "0"
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=1200)
-            return self._parse_accuracy_from_output(result.stdout, "hendrycksTest-moral_scenarios")
-        except:
-            logging.warning("HHH eval not available, using moral scenarios proxy")
-            return 0.0
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=2400)
+            return self._parse_accuracy_from_output(result.stdout, "unitxt")
+        except Exception as e:
+            logging.error(f"HH-RLHF evaluation failed: {e}")
+            logging.warning("Falling back to ethics proxy evaluation")
+
+            # Fallback to ethics evaluation
+            fallback_cmd = [
+                "python", "-m", "lm_eval",
+                "--model", "hf",
+                "--model_args", f"pretrained={model_path}",
+                "--tasks", "hendrycksTest-moral_scenarios",
+                "--batch_size", "4",
+                "--num_fewshot", "0"
+            ]
+
+            try:
+                fallback_result = subprocess.run(fallback_cmd, capture_output=True, text=True, timeout=1200)
+                return self._parse_accuracy_from_output(fallback_result.stdout, "hendrycksTest-moral_scenarios")
+            except:
+                return 0.0
 
     def _parse_accuracy_from_output(self, output: str, task: str) -> float:
         """Parse accuracy from lm-eval output"""

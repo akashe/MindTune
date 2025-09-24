@@ -57,6 +57,8 @@ class TrainingConfig:
     # Evaluation settings
     evaluation_strategy: str = "steps"
     load_best_model_at_end: bool = True
+    save_only_model: bool = True
+    save_strategy: str = "no"
     metric_for_best_model: str = "eval_loss"
     greater_is_better: bool = False
     

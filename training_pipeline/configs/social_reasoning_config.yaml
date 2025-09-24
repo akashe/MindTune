@@ -1,7 +1,7 @@
 experiment:
   name: "diary_social_reasoning_evaluation"
   models_to_train: ["non_reasoning", "reasoning"]
-  benchmarks_to_run: ["social_iqa", "truthfulqa", "winogrande"]
+  benchmarks_to_run: ["social_iqa", "truthfulqa", "winogrande", "hhh_eval"]
   save_results_to: "./social_reasoning_results"
 
 # Data configuration
