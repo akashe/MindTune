@@ -14,9 +14,15 @@ class ModelEvaluator:
 
     def _get_model_args(self, model_path: str) -> str:
         """Get appropriate model arguments based on model type"""
-        if "/outputs/" in model_path or "final_model" in model_path:
-            # Fine-tuned model - load as-is without additional quantization
-            return f"pretrained={model_path},device_map=auto,torch_dtype=auto,trust_remote_code=True"
+        if "/outputs/" in model_path or "merged_model" in model_path:
+            # Check if merged model exists (faster evaluation)
+            if os.path.exists(model_path):
+                logging.info(f"🚀 Using merged model for faster evaluation: {merged_path}")
+                return f"pretrained={model_path},device_map=auto,trust_remote_code=True"
+
+            # Fallback to PEFT adapter loading
+            logging.info(f"Using LoRA adapters (slower): {model_path}")
+            return f"pretrained=unsloth/llama-2-7b-bnb-4bit,peft={model_path},device_map=auto,trust_remote_code=True"
         else:
             # Base model - may need quantization for memory efficiency
             return f"pretrained={model_path},device_map=auto"

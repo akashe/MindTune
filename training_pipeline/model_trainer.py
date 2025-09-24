@@ -168,12 +168,25 @@ class ModelTrainer:
         logging.info(f"🚀 Starting training: {run_name}")
         trainer.train()
         
-        # Save model
+        # Save LoRA adapters (small, for archival)
         final_model_path = os.path.join(output_dir, "final_model")
         trainer.save_model(final_model_path)
         self.tokenizer.save_pretrained(final_model_path)
 
-        logging.info(f"✅ Training complete. Model saved to: {final_model_path}")
+        # Save merged model for fast evaluation
+        merged_model_path = os.path.join(output_dir, "merged_model")
+        try:
+            logging.info("🔄 Merging LoRA adapters for fast evaluation...")
+            # Merge LoRA adapters into base model
+            merged_model = FastLanguageModel.for_inference(self.model)
+            merged_model.save_pretrained(merged_model_path)
+            self.tokenizer.save_pretrained(merged_model_path)
+            logging.info(f"📦 Merged model saved to: {merged_model_path}")
+        except Exception as e:
+            logging.warning(f"⚠️  Could not save merged model: {e}")
+            logging.info("Will use LoRA adapters for evaluation instead")
+
+        logging.info(f"✅ Training complete. LoRA adapters: {final_model_path}")
 
         # Cleanup GPU memory
         self._cleanup_gpu_memory(trainer)
@@ -185,7 +198,7 @@ class ModelTrainer:
             except:
                 pass
 
-        return final_model_path
+        return merged_model_path
 
     def _cleanup_gpu_memory(self, trainer=None):
         """Clean up GPU memory after training"""
