@@ -128,8 +128,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "hellaswag",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_hellaswag",
             "--verbosity", "DEBUG"
         ]
 
@@ -152,7 +154,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1200)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "hellaswag")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_hellaswag/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('hellaswag', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"HellaSwag evaluation failed: {e}")
             return 0.0
@@ -165,8 +172,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "arc_easy",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_arc_easy",
             "--verbosity", "DEBUG"
         ]
 
@@ -189,7 +198,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1200)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "arc_easy")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_arc_easy/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('arc_easy', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"ARC-Easy evaluation failed: {e}")
             return 0.0
@@ -202,8 +216,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "mmlu_elementary_mathematics",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_mmlu",
             "--verbosity", "DEBUG"
         ]
 
@@ -226,7 +242,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1200)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "mmlu_elementary_mathematics")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_mmlu/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('mmlu_elementary_mathematics', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"MMLU evaluation failed: {e}")
             return 0.0
@@ -239,8 +260,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "social_iqa",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_social_iqa",
             "--verbosity", "DEBUG"
         ]
 
@@ -263,7 +286,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1200)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "social_iqa")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_social_iqa/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('social_iqa', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"SocialIQA evaluation failed: {e}")
             return 0.0
@@ -276,8 +304,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "truthfulqa_mc2",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_truthfulqa",
             "--verbosity", "DEBUG"
         ]
 
@@ -300,7 +330,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1800)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "truthfulqa_mc2")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_truthfulqa/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('truthfulqa_mc2', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"TruthfulQA evaluation failed: {e}")
             return 0.0
@@ -313,8 +348,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "winogrande",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_winogrande",
             "--verbosity", "DEBUG"
         ]
 
@@ -337,7 +374,12 @@ class ModelEvaluator:
 
             process.wait(timeout=1200)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "winogrande")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_winogrande/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('winogrande', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"Winogrande evaluation failed: {e}")
             return 0.0
@@ -351,8 +393,10 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
-            "--batch_size", "auto:3",
+            "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", f"eval_results_{os.path.basename(model_path)}_hhh",
             "--verbosity", "DEBUG"
         ]
 
@@ -375,7 +419,12 @@ class ModelEvaluator:
 
             process.wait(timeout=2400)
 
-            return self._parse_accuracy_from_output(''.join(output_lines), "unitxt")
+            # Parse results from output file
+            output_file = f"eval_results_{os.path.basename(model_path)}_hhh/results.json"
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    results = json.load(f)
+                return results.get('results', {}).get('unitxt', {}).get('acc', 0.0)
         except Exception as e:
             logging.error(f"HH-RLHF evaluation failed: {e}")
             logging.warning("Falling back to ethics proxy evaluation")
@@ -384,10 +433,12 @@ class ModelEvaluator:
             fallback_cmd = [
                 "python", "-m", "lm_eval",
                 "--model", "hf",
-                "--model_args", f"pretrained={model_path}",
+                "--model_args", self._get_model_args(model_path),
                 "--tasks", "hendrycksTest-moral_scenarios",
-                "--batch_size", "auto:3",
+                "--batch_size", "auto",
                 "--num_fewshot", "0",
+                "--log_samples",
+                "--output_path", f"eval_results_{os.path.basename(model_path)}_ethics",
                 "--verbosity", "DEBUG"
             ]
 
@@ -410,7 +461,12 @@ class ModelEvaluator:
 
                 fallback_process.wait(timeout=1200)
 
-                return self._parse_accuracy_from_output(''.join(fallback_output_lines), "hendrycksTest-moral_scenarios")
+                # Parse results from fallback output file
+                fallback_output_file = f"eval_results_{os.path.basename(model_path)}_ethics/results.json"
+                if os.path.exists(fallback_output_file):
+                    with open(fallback_output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
             except Exception as fallback_e:
                 logging.error(f"Fallback evaluation failed: {fallback_e}")
                 return 0.0
