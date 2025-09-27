@@ -177,46 +177,39 @@ class ModelTrainer:
         merged_model_path = os.path.join(output_dir, "merged_model")
         try:
             logging.info("🔄 Merging LoRA adapters for fast evaluation...")
-            # Merge LoRA adapters into base model and unload to CPU
-            merged_model = FastLanguageModel.for_inference(self.model)
 
-            # Save with proper model config in full precision for fast evaluation
+            # Use Unsloth's merge_and_unload to get full merged model
+            merged_model = self.model.merge_and_unload()
+
+            # Save merged model in fp16 for fast evaluation
             merged_model.save_pretrained(
                 merged_model_path,
                 safe_serialization=True,
-                max_shard_size="5GB",
-                torch_dtype=torch.float16  # Full precision for faster eval on bigger GPUs
+                max_shard_size="5GB"
             )
             self.tokenizer.save_pretrained(merged_model_path)
 
-            # Copy base model config to merged model directory
-            import shutil
-            base_model_path = self.model_config.base_model
-            if "unsloth" in base_model_path:
-                # Use HF cache to find the base model config
-                from huggingface_hub import snapshot_download
-                try:
-                    base_config_path = snapshot_download(base_model_path, allow_patterns="config.json")
-                    base_config_file = os.path.join(base_config_path, "config.json")
-                    if os.path.exists(base_config_file):
-                        # Copy and clean the config
-                        import json
-                        with open(base_config_file, 'r') as f:
-                            config = json.load(f)
-                        # Remove problematic quantization config
-                        if 'quantization_config' in config:
-                            config['quantization_config'] = None
-                        # Save cleaned config
-                        with open(os.path.join(merged_model_path, "config.json"), 'w') as f:
-                            json.dump(config, f, indent=2)
-                        logging.info("📝 Fixed config.json for merged model")
-                except Exception as config_e:
-                    logging.warning(f"Could not copy base config: {config_e}")
-
             logging.info(f"📦 Merged model saved to: {merged_model_path}")
+
+            # Verify the merge worked by checking for model.safetensors
+            model_file = os.path.join(merged_model_path, "model.safetensors")
+            if os.path.exists(model_file):
+                size_mb = os.path.getsize(model_file) / (1024*1024)
+                logging.info(f"✅ Merged model file: {size_mb:.1f}MB")
+            else:
+                logging.warning("⚠️ No model.safetensors found - merge may have failed")
+
         except Exception as e:
-            logging.warning(f"⚠️  Could not save merged model: {e}")
+            logging.warning(f"⚠️ Could not save merged model: {e}")
             logging.info("Will use LoRA adapters for evaluation instead")
+            # Fallback: just copy adapter files with a note
+            try:
+                import shutil
+                shutil.copytree(final_model_path, merged_model_path)
+                logging.info("📋 Copied LoRA adapters as fallback")
+            except:
+                pass
+
 
         logging.info(f"✅ Training complete. LoRA adapters: {final_model_path}")
 
