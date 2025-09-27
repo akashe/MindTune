@@ -180,11 +180,12 @@ class ModelTrainer:
             # Merge LoRA adapters into base model and unload to CPU
             merged_model = FastLanguageModel.for_inference(self.model)
 
-            # Save with proper model config by specifying save method
+            # Save with proper model config in full precision for fast evaluation
             merged_model.save_pretrained(
                 merged_model_path,
                 safe_serialization=True,
-                max_shard_size="5GB"
+                max_shard_size="5GB",
+                torch_dtype=torch.float16  # Full precision for faster eval on bigger GPUs
             )
             self.tokenizer.save_pretrained(merged_model_path)
 

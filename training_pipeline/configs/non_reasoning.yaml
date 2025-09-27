@@ -1,7 +1,7 @@
 # configs/non_reasoning.yaml
 model:
   name: "non_reasoning"
-  base_model: "unsloth/llama-2-7b-bnb-4bit"
+  base_model: "Qwen/Qwen2.5-3B"
   max_seq_length: 2048
   lora_r: 32
   lora_alpha: 64
@@ -23,7 +23,7 @@ training:
   logging_steps: 5
   save_steps: 10
   eval_steps: 10
-  load_in_4bit: true
+  load_in_4bit: false
   optim: "adamw_torch"   
   lr_scheduler_type: "linear"           
   weight_decay: 0.01
@@ -34,8 +34,8 @@ training:
   remove_unused_columns: false
   dataloader_drop_last: true
   gradient_checkpointing: false     
-  fp16: null                       
-  bf16: null                       
+  fp16: true
+  bf16: false                       
   use_gradient_checkpointing: false
   evaluation_strategy: "steps"
   load_best_model_at_end: true
@@ -50,5 +50,5 @@ training:
   report_to: "wandb"                    # Enable wandb
   wandb_project: "finetune-my-diary"    # Your project name
   wandb_entity: "akashe"                     # Your username (or null for default)
-  wandb_tags: ["non-reasoning", "diary", "personal-data"]
+  wandb_tags: ["non-reasoning", "qwen", "fp16", "diary", "personal-data"]
   run_name: null 
