@@ -98,6 +98,18 @@ class ExperimentConfig:
     benchmarks_to_run: List[str]
     save_results_to: str
 
+@dataclass
+class S3Config:
+    bucket_name: str
+    aws_profile: Optional[str] = None
+    auto_upload: bool = True
+    upload_merged_models: bool = True
+    upload_lora_adapters: bool = True
+    upload_evaluation_results: bool = True
+    upload_training_logs: bool = True
+    compress_logs: bool = True
+
+
 class ConfigManager:
     def __init__(self, config_dir="configs"):
         self.config_dir = config_dir
@@ -137,3 +149,13 @@ class ConfigManager:
             training_config.logging_steps = 1
             
         return training_config
+
+    def get_s3_config(self) -> Dict:
+        """Load S3 configuration"""
+        config_file = os.path.join(self.config_dir, "s3_config.yaml")
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        s3_config = S3Config(**config['s3'])
+        
+        return s3_config

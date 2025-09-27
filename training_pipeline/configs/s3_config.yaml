@@ -1,6 +1,6 @@
 # S3 Configuration
 s3:
-  bucket_name: "diary-training-artifacts"
+  bucket_name: "diary-training-artificats"
   aws_profile: null  # Use default AWS credentials, or specify profile name
 
   # Upload settings
@@ -10,17 +10,4 @@ s3:
   upload_evaluation_results: true  # Upload benchmark results
   upload_training_logs: true  # Upload wandb/training logs
 
-  # Performance thresholds for best model promotion
-  best_model_thresholds:
-    gsm8k: 0.15  # Promote if GSM8K > 15%
-    hellaswag: 0.60  # Promote if HellaSwag > 60%
-    overall_improvement: 0.05  # Promote if 5% better than previous best
-
-  # Compression and optimization
   compress_logs: true  # Compress log files before upload
-  exclude_patterns:
-    - "*.tmp"
-    - "__pycache__"
-    - ".git"
-    - "wandb/tmp"
-    - "training_args.bin"  # Large binary files

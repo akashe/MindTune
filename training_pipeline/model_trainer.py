@@ -97,9 +97,14 @@ class ModelTrainer:
             self.setup_model()
         
         # Setup output directory
-        output_dir = os.path.join(
+        experiment_dir = os.path.join(
             self.training_config.output_dir,
-            f"{self.experiment_name}_{run_name}"
+            self.experiment_name
+        )
+
+        output_dir = os.path.join(
+            experiment_dir,
+            run_name
         )
 
         # Auto-detect precision settings if not specified
@@ -326,7 +331,7 @@ class ModelTrainer:
             except:
                 pass
 
-        return merged_model_path
+        return merged_model_path, experiment_dir
 
     def _cleanup_gpu_memory(self, trainer=None):
         """Clean up GPU memory after training"""

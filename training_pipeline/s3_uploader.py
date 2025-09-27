@@ -12,9 +12,10 @@ from botocore.exceptions import ClientError, NoCredentialsError
 class S3Uploader:
     """Upload training artifacts to S3 with organized structure"""
 
-    def __init__(self, bucket_name: str, aws_profile: Optional[str] = None):
+    def __init__(self, bucket_name: str, experiment_name: str, aws_profile: Optional[str] = None):
         self.bucket_name = bucket_name
         self.aws_profile = aws_profile
+        self.experiment_key = f"experiments/{experiment_name}"
 
         # Initialize S3 client
         try:
@@ -99,11 +100,15 @@ class S3Uploader:
             logging.error(f"❌ Failed to upload {local_path}: {e}")
             return False
 
-    def upload_directory(self, local_dir: str, s3_prefix: str,
+    def upload_directory(self, local_dir: str, s3_prefix: str = None,
                         exclude_patterns: List[str] = None) -> bool:
         """Upload entire directory to S3"""
         exclude_patterns = exclude_patterns or []
         local_path = Path(local_dir)
+
+        # TODO: Temp fix
+        if not s3_prefix:
+            s3_prefix = self.experiment_key
 
         if not local_path.exists():
             logging.warning(f"⚠️  Directory doesn't exist: {local_dir}")

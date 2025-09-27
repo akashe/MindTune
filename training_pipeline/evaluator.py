@@ -90,7 +90,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_gsm8k"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -146,7 +147,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hellaswag"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -194,7 +196,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_arc_easy"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -242,7 +245,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_mmlu"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -291,7 +295,8 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_social_iqa"),
             "--verbosity", "DEBUG",
-            "--trust_remote_code"
+            "--trust_remote_code",
+            "--limit", "10"
         ]
 
         try:
@@ -339,7 +344,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_truthfulqa"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -387,7 +393,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_winogrande"),
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -436,7 +443,8 @@ class ModelEvaluator:
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh",
-            "--verbosity", "DEBUG"
+            "--verbosity", "DEBUG",
+            "--limit", "10"
         ]
 
         try:
@@ -482,7 +490,8 @@ class ModelEvaluator:
                 "--num_fewshot", "0",
                 "--log_samples",
                 "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",
-                "--verbosity", "DEBUG"
+                "--verbosity", "DEBUG",
+                "--limit", "10"
             ]
 
             try:

@@ -1,7 +1,7 @@
 # pipeline_runner.py
 import argparse
 import logging
-import os, sys
+import os, sys, json
 import yaml
 from datetime import datetime
 from typing import Dict, List
@@ -13,7 +13,6 @@ from model_trainer import ModelTrainer
 from evaluator import ModelEvaluator
 from config import ConfigManager
 from s3_uploader import S3Uploader
-from config import load_config
 
 class ExperimentPipeline:
     def __init__(self, config_path: str, test_mode: bool = False):
@@ -49,16 +48,17 @@ class ExperimentPipeline:
             datasets = self._prepare_data()
             
             # 2. Train models
-            trained_models = self._train_models(datasets)
+            trained_models, experiment_dir = self._train_models(datasets)
+            self.experiment_dir = experiment_dir
             
             # 3. Evaluate models
-            evaluation_results = self._evaluate_models(trained_models)
+            evaluation_results = self._evaluate_models(trained_models, experiment_dir)
             
             # 4. Generate report
             self._generate_final_report(evaluation_results)
 
             # 5. Upload to S3 (if configured)
-            self._upload_to_s3(evaluation_results)
+            self._upload_to_s3(self.experiment_name, experiment_dir)
 
             logging.info("🎉 Experiment completed successfully!")
             
@@ -101,7 +101,7 @@ class ExperimentPipeline:
             
             # Setup and train
             trainer = ModelTrainer(model_config, training_config, self.experiment_name)
-            model_path = trainer.train(datasets[model_type], model_type)
+            model_path, experiment_dir = trainer.train(datasets[model_type], model_type)
             
             trained_models[model_type] = model_path
             logging.info(f"✅ {model_type} training complete: {model_path}")
@@ -109,9 +109,9 @@ class ExperimentPipeline:
             # Clean up GPU memory between models
             self._cleanup_gpu_memory()
 
-        return trained_models
+        return trained_models, experiment_dir
     
-    def _evaluate_models(self, trained_models: Dict[str, str]) -> Dict:
+    def _evaluate_models(self, trained_models: Dict[str, str], experiment_dir : str) -> Dict:
         """Evaluate all trained models"""
         
         logging.info("📊 Starting model evaluation...")
@@ -122,15 +122,15 @@ class ExperimentPipeline:
         # Add baseline evaluation (base model without fine-tuning)
         if not self.test_mode:  # Skip baseline in test mode for speed
             base_model = self.config_manager.get_model_config('non_reasoning').base_model
-            evaluator.evaluate_model(base_model, "baseline", benchmarks, self.output_dir)
+            evaluator.evaluate_model(base_model, "baseline", benchmarks, experiment_dir)
 
         # Evaluate fine-tuned models
         for model_name, model_path in trained_models.items():
             # Determine experiment directory for this model
-            if "non_reasoning" in model_name:
-                experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_non_reasoning")
-            else:
-                experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_reasoning")
+            # if "non_reasoning" in model_name:
+            #     experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_non_reasoning")
+            # else:
+            #     experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_reasoning")
 
             evaluator.evaluate_model(model_path, model_name, benchmarks, experiment_dir)
         
@@ -165,8 +165,8 @@ class ExperimentPipeline:
         report = evaluator.generate_comparison_report()
         
         # Save results
-        results_file = f"results_{self.experiment_name}.json"
-        report_file = f"report_{self.experiment_name}.md"
+        results_file = os.path.join(self.experiment_dir, f"results_{self.experiment_name}.json")
+        report_file = os.path.join(self.experiment_dir, f"report_{self.experiment_name}.md")
         
         evaluator.save_results(results_file)
         
@@ -179,12 +179,13 @@ class ExperimentPipeline:
         print("="*50)
         print(report)
 
-    def _upload_to_s3(self, results: Dict):
+    def _upload_to_s3(self, experiment_name: str, experiment_dir: str):
         """Upload experiment artifacts to S3 if configured"""
 
         try:
             # Load S3 config
-            s3_config = load_config("configs/s3_config.yaml").s3
+            s3_config = self.config_manager.get_s3_config()
+            print(s3_config)
 
             if not s3_config.auto_upload:
                 logging.info("ℹ️ S3 auto upload disabled, skipping upload")
@@ -193,19 +194,13 @@ class ExperimentPipeline:
             logging.info("🚀 Starting S3 upload...")
 
             # Initialize S3 uploader
-            uploader = S3Uploader(s3_config.bucket_name, s3_config.aws_profile)
+            uploader = S3Uploader(s3_config.bucket_name, experiment_name, s3_config.aws_profile)
 
-            # Upload experiment artifacts
-            s3_url = uploader.upload_experiment_artifacts(
-                experiment_name=self.experiment_name,
-                output_dir=self.output_dir,
-                configs=self.config,
-                results=results,
-                training_time=getattr(self, 'training_time', 0)
-            )
+            success_folder_upload = uploader.upload_directory(experiment_dir)
+            
 
-            if s3_url:
-                logging.info(f"🎉 Successfully uploaded to S3: {s3_url}")
+            if success_folder_upload:
+                logging.info(f"🎉 Successfully uploaded experiment folder to S3.")
             else:
                 logging.error("❌ S3 upload failed")
 
