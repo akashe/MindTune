@@ -24,18 +24,25 @@ class ModelConfig:
 @dataclass
 class TrainingConfig:
     output_dir: str
-    max_steps: int
     learning_rate: float
     batch_size: int
     gradient_accumulation_steps: int
     warmup_steps: int
-    logging_steps: int
-    save_steps: int
-    eval_steps: int
     load_in_4bit: bool
     auto_find_batch_size: bool
+
+    # Training duration control
+    use_epochs: bool = True
+    num_train_epochs: Optional[int] = 1
+    max_steps: Optional[int] = None
+    eval_log_frequency: float = 0.2
+
+    # These can be None and will be auto-calculated
+    logging_steps: Optional[int] = None
+    save_steps: Optional[int] = None
+    eval_steps: Optional[int] = None
     # Optimizer settings
-    optim: str = "adamw_8bit"
+    optim: str = "adamw_torch"  # Better for fp16 training
     weight_decay: float = 0.01
     max_grad_norm: float = 1.0
     lr_scheduler_type: str = "linear"
