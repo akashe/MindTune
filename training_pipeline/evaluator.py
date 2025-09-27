@@ -78,6 +78,7 @@ class ModelEvaluator:
             "--tasks", "gsm8k",
             "--batch_size", "auto",
             "--num_fewshot", "0",
+            "--log_samples",
             "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k",
             "--verbosity", "DEBUG"
         ]
