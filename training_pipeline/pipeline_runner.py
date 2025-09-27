@@ -12,6 +12,8 @@ from data_manager import DataManager, DataConfig
 from model_trainer import ModelTrainer
 from evaluator import ModelEvaluator
 from config import ConfigManager
+from s3_uploader import S3Uploader
+from config import load_config
 
 class ExperimentPipeline:
     def __init__(self, config_path: str, test_mode: bool = False):
@@ -54,7 +56,10 @@ class ExperimentPipeline:
             
             # 4. Generate report
             self._generate_final_report(evaluation_results)
-            
+
+            # 5. Upload to S3 (if configured)
+            self._upload_to_s3(evaluation_results)
+
             logging.info("🎉 Experiment completed successfully!")
             
         except Exception as e:
@@ -117,11 +122,17 @@ class ExperimentPipeline:
         # Add baseline evaluation (base model without fine-tuning)
         if not self.test_mode:  # Skip baseline in test mode for speed
             base_model = self.config_manager.get_model_config('non_reasoning').base_model
-            evaluator.evaluate_model(base_model, "baseline", benchmarks)
-        
+            evaluator.evaluate_model(base_model, "baseline", benchmarks, self.output_dir)
+
         # Evaluate fine-tuned models
         for model_name, model_path in trained_models.items():
-            evaluator.evaluate_model(model_path, model_name, benchmarks)
+            # Determine experiment directory for this model
+            if "non_reasoning" in model_name:
+                experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_non_reasoning")
+            else:
+                experiment_dir = os.path.join(self.output_dir, f"{self.experiment_name}_reasoning")
+
+            evaluator.evaluate_model(model_path, model_name, benchmarks, experiment_dir)
         
         return evaluator.results
 
@@ -167,6 +178,42 @@ class ExperimentPipeline:
         print("EXPERIMENT SUMMARY")
         print("="*50)
         print(report)
+
+    def _upload_to_s3(self, results: Dict):
+        """Upload experiment artifacts to S3 if configured"""
+
+        try:
+            # Load S3 config
+            s3_config = load_config("configs/s3_config.yaml").s3
+
+            if not s3_config.auto_upload:
+                logging.info("ℹ️ S3 auto upload disabled, skipping upload")
+                return
+
+            logging.info("🚀 Starting S3 upload...")
+
+            # Initialize S3 uploader
+            uploader = S3Uploader(s3_config.bucket_name, s3_config.aws_profile)
+
+            # Upload experiment artifacts
+            s3_url = uploader.upload_experiment_artifacts(
+                experiment_name=self.experiment_name,
+                output_dir=self.output_dir,
+                configs=self.config,
+                results=results,
+                training_time=getattr(self, 'training_time', 0)
+            )
+
+            if s3_url:
+                logging.info(f"🎉 Successfully uploaded to S3: {s3_url}")
+            else:
+                logging.error("❌ S3 upload failed")
+
+        except FileNotFoundError:
+            logging.warning("⚠️ S3 config not found, skipping upload")
+        except Exception as e:
+            logging.error(f"❌ S3 upload failed: {str(e)}")
+            logging.warning("⚠️ Continuing without S3 upload")
 
 def main():
     parser = argparse.ArgumentParser(description="Run diary fine-tuning experiment")

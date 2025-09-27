@@ -8,9 +8,10 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class ModelEvaluator:
-    def __init__(self, evaluation_config: Dict):
+    def __init__(self, evaluation_config: Dict, output_dir: str = None):
         self.config = evaluation_config
         self.results = {}
+        self.output_dir = output_dir
 
     def _get_model_args(self, model_path: str) -> str:
         """Get appropriate model arguments based on model type"""
@@ -27,8 +28,16 @@ class ModelEvaluator:
             # Base model - may need quantization for memory efficiency
             return f"pretrained={model_path},device_map=auto"
     
-    def evaluate_model(self, model_path: str, model_name: str, benchmarks: List[str]) -> Dict:
+    def evaluate_model(self, model_path: str, model_name: str, benchmarks: List[str], experiment_dir: str = None) -> Dict:
         """Evaluate model on specified benchmarks"""
+
+        # Set up evaluation directory
+        if experiment_dir:
+            eval_dir = os.path.join(experiment_dir, "evals")
+            os.makedirs(eval_dir, exist_ok=True)
+            logging.info(f"📁 Creating eval results in: {eval_dir}")
+        else:
+            eval_dir = "."
         
         logging.info(f"📊 Evaluating {model_name} on benchmarks: {benchmarks}")
         
@@ -39,21 +48,22 @@ class ModelEvaluator:
                 logging.info(f"🔄 Running {benchmark} evaluation...")
                 
                 if benchmark == "gsm8k":
-                    score = self._evaluate_gsm8k(model_path)
+                    score = self._evaluate_gsm8k(model_path, eval_dir)
                 elif benchmark == "hellaswag":
-                    score = self._evaluate_hellaswag(model_path)
+                    score = self._evaluate_hellaswag(model_path, eval_dir)
                 elif benchmark == "arc_easy":
-                    score = self._evaluate_arc_easy(model_path)
+                    score = self._evaluate_arc_easy(model_path, eval_dir)
                 elif benchmark == "mmlu_subset":
-                    score = self._evaluate_mmlu_subset(model_path)
+                    score = self._evaluate_mmlu_subset(model_path, eval_dir)
                 elif benchmark == "social_iqa":
-                    score = self._evaluate_social_iqa(model_path)
+                    score = self._evaluate_social_iqa(model_path, eval_dir)
                 elif benchmark == "truthfulqa":
-                    score = self._evaluate_truthfulqa(model_path)
+                    score = self._evaluate_truthfulqa(model_path, eval_dir)
                 elif benchmark == "winogrande":
-                    score = self._evaluate_winogrande(model_path)
+                    score = self._evaluate_winogrande(model_path, eval_dir)
                 elif benchmark == "hhh_eval":
-                    score = self._evaluate_hhh_eval(model_path)
+                    logging.warning(f"⚠️  Skipping {benchmark}: task not available in lm_eval")
+                    continue
                 else:
                     logging.warning(f"⚠️  Unknown benchmark: {benchmark}")
                     continue
@@ -62,13 +72,13 @@ class ModelEvaluator:
                 logging.info(f"✅ {benchmark}: {score:.3f}")
                 
             except Exception as e:
-                logging.error(f"❌ Failed to evaluate {benchmark}: {e}")
+                logging.error(f"❌ Failed to evaluate {benchmark}: {str(e)}")
                 model_results[benchmark] = 0.0
         
         self.results[model_name] = model_results
         return model_results
     
-    def _evaluate_gsm8k(self, model_path: str) -> float:
+    def _evaluate_gsm8k(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on GSM8K math reasoning"""
 
         cmd = [
@@ -79,7 +89,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_gsm8k",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_gsm8k"),
             "--verbosity", "DEBUG"
         ]
 
@@ -105,22 +115,26 @@ class ModelEvaluator:
             process.wait(timeout=1800)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_gsm8k/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_gsm8k/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('gsm8k', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('gsm8k', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse GSM8K results: {str(parse_error)}")
+                    return 0.0
 
         except subprocess.TimeoutExpired:
             logging.error("GSM8K evaluation timed out")
             if process:
                 process.kill()
         except Exception as e:
-            logging.error(f"GSM8K evaluation failed: {e}")
+            logging.error(f"GSM8K evaluation failed: {str(e)}")
 
         return 0.0
     
-    def _evaluate_hellaswag(self, model_path: str) -> float:
+    def _evaluate_hellaswag(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on HellaSwag common sense reasoning"""
 
         cmd = [
@@ -131,7 +145,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_hellaswag",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hellaswag"),
             "--verbosity", "DEBUG"
         ]
 
@@ -155,16 +169,20 @@ class ModelEvaluator:
             process.wait(timeout=1200)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_hellaswag/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hellaswag/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('hellaswag', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('hellaswag', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse HellaSwag results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"HellaSwag evaluation failed: {e}")
+            logging.error(f"HellaSwag evaluation failed: {str(e)}")
             return 0.0
     
-    def _evaluate_arc_easy(self, model_path: str) -> float:
+    def _evaluate_arc_easy(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on ARC-Easy"""
 
         cmd = [
@@ -175,7 +193,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_arc_easy",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_arc_easy"),
             "--verbosity", "DEBUG"
         ]
 
@@ -199,16 +217,20 @@ class ModelEvaluator:
             process.wait(timeout=1200)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_arc_easy/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_arc_easy/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('arc_easy', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('arc_easy', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse ARC-Easy results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"ARC-Easy evaluation failed: {e}")
+            logging.error(f"ARC-Easy evaluation failed: {str(e)}")
             return 0.0
     
-    def _evaluate_mmlu_subset(self, model_path: str) -> float:
+    def _evaluate_mmlu_subset(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on MMLU subset (elementary math)"""
 
         cmd = [
@@ -219,7 +241,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_mmlu",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_mmlu"),
             "--verbosity", "DEBUG"
         ]
 
@@ -243,16 +265,20 @@ class ModelEvaluator:
             process.wait(timeout=1200)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_mmlu/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_mmlu/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('mmlu_elementary_mathematics', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('mmlu_elementary_mathematics', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse MMLU results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"MMLU evaluation failed: {e}")
+            logging.error(f"MMLU evaluation failed: {str(e)}")
             return 0.0
 
-    def _evaluate_social_iqa(self, model_path: str) -> float:
+    def _evaluate_social_iqa(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on SocialIQA for social reasoning"""
 
         cmd = [
@@ -263,8 +289,9 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_social_iqa",
-            "--verbosity", "DEBUG"
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_social_iqa"),
+            "--verbosity", "DEBUG",
+            "--trust_remote_code"
         ]
 
         try:
@@ -287,16 +314,20 @@ class ModelEvaluator:
             process.wait(timeout=1200)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_social_iqa/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_social_iqa/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('social_iqa', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('social_iqa', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse SocialIQA results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"SocialIQA evaluation failed: {e}")
+            logging.error(f"SocialIQA evaluation failed: {str(e)}")
             return 0.0
 
-    def _evaluate_truthfulqa(self, model_path: str) -> float:
+    def _evaluate_truthfulqa(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on TruthfulQA for truthfulness"""
 
         cmd = [
@@ -307,7 +338,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_truthfulqa",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_truthfulqa"),
             "--verbosity", "DEBUG"
         ]
 
@@ -331,16 +362,20 @@ class ModelEvaluator:
             process.wait(timeout=1800)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_truthfulqa/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_truthfulqa/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('truthfulqa_mc2', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('truthfulqa_mc2', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse TruthfulQA results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"TruthfulQA evaluation failed: {e}")
+            logging.error(f"TruthfulQA evaluation failed: {str(e)}")
             return 0.0
 
-    def _evaluate_winogrande(self, model_path: str) -> float:
+    def _evaluate_winogrande(self, model_path: str, eval_dir: str = ".") -> float:
         """Evaluate on Winogrande for commonsense reasoning"""
 
         cmd = [
@@ -351,7 +386,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_winogrande",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_winogrande"),
             "--verbosity", "DEBUG"
         ]
 
@@ -375,13 +410,17 @@ class ModelEvaluator:
             process.wait(timeout=1200)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_winogrande/results.json"
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_winogrande/results.json")
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('winogrande', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('winogrande', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse Winogrande results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"Winogrande evaluation failed: {e}")
+            logging.error(f"Winogrande evaluation failed: {str(e)}")
             return 0.0
 
     def _evaluate_hhh_eval(self, model_path: str) -> float:
@@ -396,7 +435,7 @@ class ModelEvaluator:
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
-            "--output_path", f"eval_results_{os.path.basename(model_path)}_hhh",
+            "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh",
             "--verbosity", "DEBUG"
         ]
 
@@ -420,13 +459,17 @@ class ModelEvaluator:
             process.wait(timeout=2400)
 
             # Parse results from output file
-            output_file = f"eval_results_{os.path.basename(model_path)}_hhh/results.json"
+            output_file = f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh/results.json"
             if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    results = json.load(f)
-                return results.get('results', {}).get('unitxt', {}).get('acc', 0.0)
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('unitxt', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse HHH results: {str(parse_error)}")
+                    return 0.0
         except Exception as e:
-            logging.error(f"HH-RLHF evaluation failed: {e}")
+            logging.error(f"HH-RLHF evaluation failed: {str(e)}")
             logging.warning("Falling back to ethics proxy evaluation")
 
             # Fallback to ethics evaluation
@@ -438,7 +481,7 @@ class ModelEvaluator:
                 "--batch_size", "auto",
                 "--num_fewshot", "0",
                 "--log_samples",
-                "--output_path", f"eval_results_{os.path.basename(model_path)}_ethics",
+                "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",
                 "--verbosity", "DEBUG"
             ]
 
@@ -462,13 +505,17 @@ class ModelEvaluator:
                 fallback_process.wait(timeout=1200)
 
                 # Parse results from fallback output file
-                fallback_output_file = f"eval_results_{os.path.basename(model_path)}_ethics/results.json"
+                fallback_output_file = f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics/results.json"
                 if os.path.exists(fallback_output_file):
-                    with open(fallback_output_file, 'r') as f:
-                        results = json.load(f)
-                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
+                    try:
+                        with open(fallback_output_file, 'r') as f:
+                            results = json.load(f)
+                        return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
+                    except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                        logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
+                        return 0.0
             except Exception as fallback_e:
-                logging.error(f"Fallback evaluation failed: {fallback_e}")
+                logging.error(f"Fallback evaluation failed: {str(fallback_e)}")
                 return 0.0
 
     def _parse_accuracy_from_output(self, output: str, task: str) -> float:
