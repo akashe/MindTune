@@ -33,6 +33,7 @@ class TrainingConfig:
     save_steps: int
     eval_steps: int
     load_in_4bit: bool
+    auto_find_batch_size: bool
     # Optimizer settings
     optim: str = "adamw_8bit"
     weight_decay: float = 0.01

@@ -15,14 +15,24 @@ model:
 
 training:
   output_dir: "./outputs"
-  max_steps: 30
+
+  # Training duration control
+  use_epochs: true                    # true = epoch-based, false = step-based
+  num_train_epochs: 1                 # For epoch-based training
+  max_steps: 50                       # For step-based training
+  eval_log_frequency: 0.2             # Eval/log at every 20% completion
+
+  # Training parameters
   learning_rate: 0.0002
-  batch_size: 16
+  batch_size: 32                      # Starting point for auto-detection
+  auto_find_batch_size: true          # Enable automatic batch size optimization
   gradient_accumulation_steps: 1
   warmup_steps: 5
-  logging_steps: 5
-  save_steps: 10
-  eval_steps: 10
+
+  # These will be auto-calculated based on use_epochs flag
+  logging_steps: null                 # Auto-calculated (20% intervals)
+  save_steps: null                    # Auto-calculated (20% intervals)
+  eval_steps: null                    # Auto-calculated (20% intervals)
   load_in_4bit: false
   optim: "adamw_torch"   
   lr_scheduler_type: "linear"           
