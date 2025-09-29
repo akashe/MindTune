@@ -1,7 +1,7 @@
 experiment:
   name: "diary_personal_finetuning"
   models_to_train: ["non_reasoning", "reasoning"]
-  benchmarks_to_run: ["gsm8k", "hellaswag", "arc_easy", "social_iqa", "truthfulqa", "winogrande", "hhh_eval"]
+  benchmarks_to_run: ["gsm8k", "hellaswag", "arc_easy", "social_iqa", "truthfulqa", "winogrande", "hendrycks_ethics"]
   save_results_to: "./experiment_results"
 
 # THIS WAS MISSING - Data configuration

@@ -61,6 +61,8 @@ class ModelEvaluator:
                     score = self._evaluate_truthfulqa(model_path, eval_dir)
                 elif benchmark == "winogrande":
                     score = self._evaluate_winogrande(model_path, eval_dir)
+                elif benchmark == "hendrycks_ethics":
+                    score = self._evaluate_hendrycks_ethics(model_path, eval_dir)
                 elif benchmark == "hhh_eval":
                     logging.warning(f"⚠️  Skipping {benchmark}: task not available in lm_eval")
                     continue
@@ -428,6 +430,55 @@ class ModelEvaluator:
                     return 0.0
         except Exception as e:
             logging.error(f"Winogrande evaluation failed: {str(e)}")
+            return 0.0
+
+    def _evaluate_hendrycks_ethics(self, model_path: str, eval_dir: str = ".") -> float:
+        """Evaluate on Hendrycks Ethics for moral reasoning"""
+
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", self._get_model_args(model_path),
+            "--tasks", "hendrycksTest-moral_scenarios",
+            "--batch_size", "auto",
+            "--num_fewshot", "0",
+            "--log_samples",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics"),
+            "--verbosity", "DEBUG",
+            "--limit", "10"
+        ]
+
+        try:
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            output_lines = []
+            for line in process.stdout:
+                print(line.strip())
+                output_lines.append(line)
+
+            process.wait(timeout=1200)
+
+            # Parse results from output file
+            output_file = os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics/results.json")
+            if os.path.exists(output_file):
+                try:
+                    with open(output_file, 'r') as f:
+                        results = json.load(f)
+                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
+                except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+                    logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
+                    return 0.0
+        except Exception as e:
+            logging.error(f"Ethics evaluation failed: {str(e)}")
             return 0.0
 
     def _evaluate_hhh_eval(self, model_path: str) -> float:
