@@ -93,7 +93,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_gsm8k"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -127,6 +127,9 @@ class ModelEvaluator:
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse GSM8K results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"GSM8K results file not found: {output_file}")
+                return 0.0
 
         except subprocess.TimeoutExpired:
             logging.error("GSM8K evaluation timed out")
@@ -150,7 +153,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hellaswag"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -178,10 +181,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('hellaswag', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('hellaswag', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse HellaSwag results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"HellaSwag results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"HellaSwag evaluation failed: {str(e)}")
             return 0.0
@@ -199,7 +205,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_arc_easy"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -227,10 +233,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('arc_easy', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('arc_easy', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse ARC-Easy results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"ARC-Easy results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"ARC-Easy evaluation failed: {str(e)}")
             return 0.0
@@ -248,7 +257,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_mmlu"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -276,10 +285,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('mmlu_elementary_mathematics', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('mmlu_elementary_mathematics', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse MMLU results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"MMLU results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"MMLU evaluation failed: {str(e)}")
             return 0.0
@@ -298,7 +310,7 @@ class ModelEvaluator:
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_social_iqa"),
             "--verbosity", "DEBUG",
             "--trust_remote_code",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -326,10 +338,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('social_iqa', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('social_iqa', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse SocialIQA results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"SocialIQA results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"SocialIQA evaluation failed: {str(e)}")
             return 0.0
@@ -347,7 +362,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_truthfulqa"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -375,10 +390,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('truthfulqa_mc2', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('truthfulqa_mc2', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse TruthfulQA results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"TruthfulQA results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"TruthfulQA evaluation failed: {str(e)}")
             return 0.0
@@ -396,7 +414,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_winogrande"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -424,10 +442,13 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('winogrande', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('winogrande', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse Winogrande results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"Winogrande results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"Winogrande evaluation failed: {str(e)}")
             return 0.0
@@ -445,7 +466,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics"),
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -473,12 +494,15 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"hendrycks Ethics results file not found: {output_file}")
+                return 0.0
         except Exception as e:
-            logging.error(f"Ethics evaluation failed: {str(e)}")
+            logging.error(f"hendrycks Ethics evaluation failed: {str(e)}")
             return 0.0
 
     def _evaluate_hhh_eval(self, model_path: str) -> float:
@@ -495,7 +519,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh",
             "--verbosity", "DEBUG",
-            "--limit", "10"
+            "--limit", "5"
         ]
 
         try:
@@ -523,60 +547,63 @@ class ModelEvaluator:
                 try:
                     with open(output_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('unitxt', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('unitxt', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse HHH results: {str(parse_error)}")
                     return 0.0
+            else:
+                logging.error(f"HHH results file not found: {output_file}")
+                return 0.0
         except Exception as e:
             logging.error(f"HH-RLHF evaluation failed: {str(e)}")
             logging.warning("Falling back to ethics proxy evaluation")
 
-            # Fallback to ethics evaluation
-            fallback_cmd = [
-                "python", "-m", "lm_eval",
-                "--model", "hf",
-                "--model_args", self._get_model_args(model_path),
-                "--tasks", "hendrycksTest-moral_scenarios",
-                "--batch_size", "auto",
-                "--num_fewshot", "0",
-                "--log_samples",
-                "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",
-                "--verbosity", "DEBUG",
-                "--limit", "10"
-            ]
+            # # Fallback to ethics evaluation
+            # fallback_cmd = [
+            #     "python", "-m", "lm_eval",
+            #     "--model", "hf",
+            #     "--model_args", self._get_model_args(model_path),
+            #     "--tasks", "hendrycksTest-moral_scenarios",
+            #     "--batch_size", "auto",
+            #     "--num_fewshot", "0",
+            #     "--log_samples",
+            #     "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",
+            #     "--verbosity", "DEBUG",
+            #     "--limit", "10"
+            # ]
 
-            try:
-                logging.info(f"Running fallback command: {' '.join(fallback_cmd)}")
+            # try:
+            #     logging.info(f"Running fallback command: {' '.join(fallback_cmd)}")
 
-                fallback_process = subprocess.Popen(
-                    fallback_cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
+            #     fallback_process = subprocess.Popen(
+            #         fallback_cmd,
+            #         stdout=subprocess.PIPE,
+            #         stderr=subprocess.STDOUT,
+            #         text=True,
+            #         bufsize=1,
+            #         universal_newlines=True
+            #     )
 
-                fallback_output_lines = []
-                for line in fallback_process.stdout:
-                    print(line.strip())
-                    fallback_output_lines.append(line)
+            #     fallback_output_lines = []
+            #     for line in fallback_process.stdout:
+            #         print(line.strip())
+            #         fallback_output_lines.append(line)
 
-                fallback_process.wait(timeout=1200)
+            #     fallback_process.wait(timeout=1200)
 
-                # Parse results from fallback output file
-                fallback_output_file = f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics/results.json"
-                if os.path.exists(fallback_output_file):
-                    try:
-                        with open(fallback_output_file, 'r') as f:
-                            results = json.load(f)
-                        return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc', 0.0)
-                    except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
-                        logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
-                        return 0.0
-            except Exception as fallback_e:
-                logging.error(f"Fallback evaluation failed: {str(fallback_e)}")
-                return 0.0
+            #     # Parse results from fallback output file
+            #     fallback_output_file = f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics/results.json"
+            #     if os.path.exists(fallback_output_file):
+            #         try:
+            #             with open(fallback_output_file, 'r') as f:
+            #                 results = json.load(f)
+            #             return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc,none', 0.0)
+            #         except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
+            #             logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
+            #             return 0.0
+            # except Exception as fallback_e:
+            #     logging.error(f"Fallback evaluation failed: {str(fallback_e)}")
+            #     return 0.0
 
     def _parse_accuracy_from_output(self, output: str, task: str) -> float:
         """Parse accuracy from lm-eval output"""
