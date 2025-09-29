@@ -34,9 +34,9 @@ class ModelEvaluator:
             return None
 
         import glob
-        # Look for results files in any subdirectory
+        # Look for results files in any subdirectory, including hidden directories
         pattern = os.path.join(output_dir, "**/results_*.json")
-        results_files = glob.glob(pattern, recursive=True)
+        results_files = glob.glob(pattern, recursive=True, include_hidden=True)
 
         if results_files:
             # Return the most recent results file
@@ -144,7 +144,7 @@ class ModelEvaluator:
                 try:
                     with open(results_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('gsm8k', {}).get('acc', 0.0)
+                    return results.get('results', {}).get('gsm8k', {}).get('exact_match,strict-match', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse GSM8K results: {str(parse_error)}")
                     return 0.0
