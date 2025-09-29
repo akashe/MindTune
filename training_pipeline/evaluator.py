@@ -487,12 +487,13 @@ class ModelEvaluator:
             "python", "-m", "lm_eval",
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
-            "--tasks", "hendrycksTest-moral_scenarios",
+            "--tasks", "ethics_cm",
             "--batch_size", "auto",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_ethics"),
             "--verbosity", "DEBUG",
+            "--trust_remote_code",
             "--limit", "5"
         ]
 
@@ -522,7 +523,7 @@ class ModelEvaluator:
                 try:
                     with open(results_file, 'r') as f:
                         results = json.load(f)
-                    return results.get('results', {}).get('hendrycksTest-moral_scenarios', {}).get('acc,none', 0.0)
+                    return results.get('results', {}).get('ethics_cm', {}).get('acc,none', 0.0)
                 except (json.JSONDecodeError, KeyError, TypeError) as parse_error:
                     logging.warning(f"Failed to parse Ethics results: {str(parse_error)}")
                     return 0.0
