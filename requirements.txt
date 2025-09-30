@@ -128,8 +128,8 @@ typing-inspection==0.4.1
 typing_extensions==4.15.0
 tyro==0.9.32
 tzdata==2025.2
-unsloth @ git+https://github.com/unslothai/unsloth.git@229e2ecc67756f36316dfcbea42396f59eef44e0
-unsloth_zoo @ git+https://github.com/unslothai/unsloth_zoo.git@661df44e5ade986c2e84f485f19d6714841199ec
+unsloth 
+unsloth_zoo
 urllib3==2.5.0
 wandb==0.22.0
 wheel==0.45.1
@@ -138,3 +138,4 @@ xformers @ https://download.pytorch.org/whl/cu129/xformers-0.0.32.post2-cp39-abi
 xxhash==3.5.0
 yarl==1.20.1
 zstandard==0.25.0
+flash_attn

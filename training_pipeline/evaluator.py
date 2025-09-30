@@ -108,12 +108,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "gsm8k",
-            "--batch_size", "auto",
+            "--batch_size", "300",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_gsm8k"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -169,12 +169,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "hellaswag",
-            "--batch_size", "auto",
+            "--batch_size", "250",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_hellaswag"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -222,12 +222,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "arc_easy",
-            "--batch_size", "auto",
+            "--batch_size", "250",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_arc_easy"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -275,12 +275,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "mmlu_elementary_mathematics",
-            "--batch_size", "auto",
+            "--batch_size", "250",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_mmlu"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -328,13 +328,13 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "social_iqa",
-            "--batch_size", "auto",
+            "--batch_size", "100",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_social_iqa"),
             "--verbosity", "DEBUG",
             "--trust_remote_code",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -382,12 +382,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "truthfulqa_mc2",
-            "--batch_size", "auto",
+            "--batch_size", "150",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_truthfulqa"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -435,12 +435,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "winogrande",
-            "--batch_size", "auto",
+            "--batch_size", "250",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_winogrande"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -488,13 +488,13 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "ethics_cm",
-            "--batch_size", "auto",
+            "--batch_size", "25",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_ethics"),
             "--verbosity", "DEBUG",
             "--trust_remote_code",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -543,12 +543,12 @@ class ModelEvaluator:
             "--model", "hf",
             "--model_args", self._get_model_args(model_path),
             "--tasks", "unitxt[card=cards.hh_rlhf,template=templates.classification.multi_class.relation.default,format=formats.chatapi]",
-            "--batch_size", "auto",
+            "--batch_size", "100",
             "--num_fewshot", "0",
             "--log_samples",
             "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh",
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -593,7 +593,7 @@ class ModelEvaluator:
             #     "--model", "hf",
             #     "--model_args", self._get_model_args(model_path),
             #     "--tasks", "hendrycksTest-moral_scenarios",
-            #     "--batch_size", "auto",
+            #     "--batch_size", "100",
             #     "--num_fewshot", "0",
             #     "--log_samples",
             #     "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",

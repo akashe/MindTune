@@ -188,8 +188,8 @@ class ModelTrainer:
 
         # Training arguments
         training_args = TrainingArguments(
-            # per_device_train_batch_size=self.training_config.batch_size,
-            # per_device_eval_batch_size=self.training_config.batch_size,
+            per_device_train_batch_size=self.training_config.batch_size,
+            per_device_eval_batch_size=self.training_config.batch_size,
             auto_find_batch_size = self.training_config.auto_find_batch_size,
             gradient_accumulation_steps=self.training_config.gradient_accumulation_steps,
             warmup_steps=self.training_config.warmup_steps,

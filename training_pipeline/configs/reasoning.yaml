@@ -24,8 +24,8 @@ training:
 
   # Training parameters
   learning_rate: 0.0001               # Slightly lower for reasoning training
-  batch_size: 16                      # Starting point (lower for longer sequences)
-  auto_find_batch_size: true          # Enable automatic batch size optimization
+  batch_size: 128                      # Starting point (lower for longer sequences)
+  auto_find_batch_size: false          # Enable automatic batch size optimization
   gradient_accumulation_steps: 1
   warmup_steps: 1
 
@@ -44,8 +44,8 @@ training:
   remove_unused_columns: false
   dataloader_drop_last: true
   gradient_checkpointing: false            # Keep off for speed
-  fp16: true
-  bf16: false
+  fp16: false
+  bf16: true
   use_gradient_checkpointing: false
   evaluation_strategy: "steps"
   load_best_model_at_end: true
