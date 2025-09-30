@@ -162,7 +162,7 @@ class ModelTrainer:
 
             # Calculate eval/log steps based on dataset size estimate
             dataset_size = len(dataset['train'])
-            estimated_batch_size = 16  # Conservative estimate
+            estimated_batch_size = self.training_config.batch_size  # Conservative estimate
             steps_per_epoch = dataset_size // estimated_batch_size
             eval_log_frequency = getattr(self.training_config, 'eval_log_frequency', 0.2)
             interval_steps = max(1, int(steps_per_epoch * eval_log_frequency))
@@ -185,6 +185,10 @@ class ModelTrainer:
         logging_steps = interval_steps
         save_steps = interval_steps
         eval_steps = interval_steps
+
+        logging.info(f"📁 logging_steps: {logging_steps}")
+        logging.info(f"📁 save_steps: {save_steps}")
+        logging.info(f"📁 eval_steps: {eval_steps}")
 
         # Training arguments
         training_args = TrainingArguments(
