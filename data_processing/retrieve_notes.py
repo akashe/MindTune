@@ -5,6 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownHead
 from langchain.docstore.document import Document
 import markdown2
 import glob
+import json
 from langchain_text_splitters import  HTMLSemanticPreservingSplitter, MarkdownHeaderTextSplitter, CharacterTextSplitter
 
 import nltk
@@ -124,44 +125,51 @@ def load_markdown_files_naively_semantically_preserved(filepaths: list, files_se
 
         with open(filepath, "r", encoding="utf-8") as f:
             text_original = f.read()
-            text = text_original.replace("\n  \n  \n  \n  \n  \n", "\n\n").replace("\n  \n  \n  \n  \n", "\n\n").replace("\n  \n  \n  \n", "\n\n").replace("\n  \n  \n", "\n\n").replace("\n  \n", "\n\n")
-            # html = markdown2.markdown(text)
-            # documents = splitter.split_text(text)
-            # Update metadata for each document
-            # for i, document in enumerate(documents):
-            #     topics = extract_topics_from_entry(document.page_content)
-            #     document.metadata["topics"] = topics
+            # text = text_original.replace("\n  \n  \n  \n  \n  \n", "\n\n").replace("\n  \n  \n  \n  \n", "\n\n").replace("\n  \n  \n  \n", "\n\n").replace("\n  \n  \n", "\n\n").replace("\n  \n", "\n\n")
+            # # html = markdown2.markdown(text)
+            # # documents = splitter.split_text(text)
+            # # Update metadata for each document
+            # # for i, document in enumerate(documents):
+            # #     topics = extract_topics_from_entry(document.page_content)
+            # #     document.metadata["topics"] = topics
             
-            contents = text.split("\n\n")
-            # documents = [Document(page_content=content.strip(), metadata={}) for content in contents if len(content.strip()) > 0]
+            # contents = text.split("\n\n")
+            # # documents = [Document(page_content=content.strip(), metadata={}) for content in contents if len(content.strip()) > 0]
 
-            documents = []
-            for num, content in enumerate(contents):
-                if len(content.strip()) > 0:
+            # documents = []
+            # for num, content in enumerate(contents):
+            #     if len(content.strip()) > 0:
                     
-                    date_header_regex = r"#{1,4} {1,4}\*?\*?(\d{2}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec){1}.*"
-                    if re.match(date_header_regex, content.split('\n')[0].lower().strip()):
-                        print(f"Skipping date header: {content.strip()}")
-                        total_dates += 1
-                        continue
+            #         date_header_regex = r"#{1,4} {1,4}\*?\*?(\d{2}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec){1}.*"
+            #         if re.match(date_header_regex, content.split('\n')[0].lower().strip()):
+            #             print(f"Skipping date header: {content.strip()}")
+            #             total_dates += 1
+            #             continue
                         
                     
-                    # Create a Document object for each content
-                    context = [contents[i] for i in range(num-1 if num-1 >= 0 else 0, 
-                                                        num+2 if num+2< len(contents) else len(contents)) 
-                                                        if len(contents[i].strip())>0]
-                    context = "\n\n".join(context)
+            #         # Create a Document object for each content
+            #         context = [contents[i] for i in range(num-1 if num-1 >= 0 else 0, 
+            #                                             num+2 if num+2< len(contents) else len(contents)) 
+            #                                             if len(contents[i].strip())>0]
+            #         context = "\n\n".join(context)
 
-                    doc = Document(page_content=content.strip(), 
+            #         doc = Document(page_content=content.strip(), 
+            #                     metadata={
+            #                         "source": filepath.split("/")[-1].split(".")[0],
+            #                         "context": context
+            #                         }
+            #                         )
+            #         documents.append(doc)
+
+            doc = Document(page_content=text_original.strip(), 
                                 metadata={
                                     "source": filepath.split("/")[-1].split(".")[0],
-                                    "context": context
+                                    "context": "context not available"
                                     }
                                     )
-                    documents.append(doc)
 
-            docs.extend(documents)
-            if len(docs) % 500 == 0:
+            docs.append(doc)
+            if len(docs) % 50 == 0:
                 print(f"Processed {len(docs)} documents so far."    )
 
 
@@ -182,4 +190,7 @@ def retrieve_notes():
 
 
 if __name__ == "__main__":
-    retrieve_notes()
+    docs = retrieve_notes()
+    print(docs[0])
+    with open("data/all_notes.json", "w") as f:
+        json.dump([{"page_content":doc.page_content, "source":doc.metadata.get('source', 'NA')} for doc in docs], f)
