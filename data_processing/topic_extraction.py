@@ -9,7 +9,6 @@ from tqdm import tqdm
 import logging
 from datetime import datetime
 from typing import List, Dict, Set
-from retrieve_notes import retrieve_notes
 
 # Setup logging
 logging.basicConfig(
@@ -269,11 +268,13 @@ def main():
     logging.info(f"📚 Loaded {len(entries)} diary entries")
 
     # Extract topics
-    extractor = TopicExtractor(ollama_model="llama3.1:8b")
+    model_name = "gemma3:12b"
+    extractor = TopicExtractor(ollama_model=model_name)
     results = extractor.process_all_entries(entries)
 
     # Save results
-    extractor.save_results(results)
+    output_file = f"data/diary_topics_{model_name.replace(':','_').replace('.','_')}.json"
+    extractor.save_results(results, output_file)
 
     logging.info("✅ Topic extraction pipeline complete!")
 
