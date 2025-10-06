@@ -13,6 +13,41 @@ class ModelEvaluator:
         self.results = {}
         self.output_dir = output_dir
 
+        # Task-specific batch sizes (empirically determined for Qwen 2.5 3B on A10 48GB)
+        # Scale these proportionally for different GPU/model combinations
+        self.batch_sizes = {
+            'gsm8k': 300,
+            'hellaswag': 250,
+            'arc_easy': 250,
+            'mmlu_elementary_mathematics': 250,
+            'mmlu_philosophy': 250,
+            'mmlu_moral_scenarios': 250,
+            'mmlu_moral_disputes': 250,
+            'mmlu_high_school_psychology': 250,
+            'mmlu_formal_logic': 250,
+            'mmlu_logical_fallacies': 250,
+            'mmlu_machine_learning': 250,
+            'social_iqa': 100,
+            'truthfulqa_mc2': 150,
+            'truthfulqa': 150,
+            'winogrande': 250,
+            'ethics_cm': 25,
+            'ethics_deontology': 25,
+            'ethics_justice': 25,
+            'ethics_utilitarianism': 25,
+            'ethics_virtue': 25,
+            'hendrycks_ethics': 25,
+            'bbh': 100,
+            'bbh_cot_fewshot': 100,
+            'commonsense_qa': 200,
+            'piqa': 200,
+            'drop': 100,
+            'strategyqa': 150,
+            'bigbench_strategyqa_multiple_choice': 150,
+            'eq_bench': 100,
+            'moral_stories': 150,
+        }
+
     def _get_model_args(self, model_path: str) -> str:
         """Get appropriate model arguments based on model type"""
         if "/outputs/" in model_path or "merged_model" in model_path:
@@ -58,47 +93,202 @@ class ModelEvaluator:
             logging.info(f"📁 Creating eval results in: {eval_dir}")
         else:
             eval_dir = "."
-        
+
         logging.info(f"📊 Evaluating {model_name} on benchmarks: {benchmarks}")
-        
+
         model_results = {}
-        
+
         for benchmark in benchmarks:
             try:
                 logging.info(f"🔄 Running {benchmark} evaluation...")
-                
+
+                # Get batch size (default to 100 if not found)
+                batch_size = self.batch_sizes.get(benchmark, 100)
+                logging.info(f"Got batch size: {batch_size} for {benchmark}")
+
+                # Route to appropriate evaluation method
                 if benchmark == "gsm8k":
-                    score = self._evaluate_gsm8k(model_path, eval_dir, model_name)
+                    # Add system instruction to enforce format
+                    system_inst = "Always end your answer with '####' followed by the final numerical answer."
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "gsm8k", batch_size,
+                                               metric="exact_match,strict-match", system_instruction=system_inst)
                 elif benchmark == "hellaswag":
-                    score = self._evaluate_hellaswag(model_path, eval_dir, model_name)
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "hellaswag", batch_size, metric="acc,none")
                 elif benchmark == "arc_easy":
-                    score = self._evaluate_arc_easy(model_path, eval_dir, model_name)
-                elif benchmark == "mmlu_subset":
-                    score = self._evaluate_mmlu_subset(model_path, eval_dir, model_name)
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "arc_easy", batch_size, metric="acc,none")
                 elif benchmark == "social_iqa":
-                    score = self._evaluate_social_iqa(model_path, eval_dir, model_name)
-                elif benchmark == "truthfulqa":
-                    score = self._evaluate_truthfulqa(model_path, eval_dir, model_name)
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "social_iqa", batch_size, metric="acc,none", trust_remote_code=True)
+                elif benchmark == "truthfulqa" or benchmark == "truthfulqa_mc2":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "truthfulqa_mc2", batch_size, metric="acc,none")
                 elif benchmark == "winogrande":
-                    score = self._evaluate_winogrande(model_path, eval_dir, model_name)
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "winogrande", batch_size, metric="acc,none")
+
+                # Ethics subtasks
+                elif benchmark.startswith("ethics_"):
+                    score = self._evaluate_task(model_path, eval_dir, model_name, benchmark, batch_size, metric="acc,none", trust_remote_code=True)
                 elif benchmark == "hendrycks_ethics":
-                    score = self._evaluate_hendrycks_ethics(model_path, eval_dir, model_name)
-                elif benchmark == "hhh_eval":
-                    logging.warning(f"⚠️  Skipping {benchmark}: task not available in lm_eval")
-                    continue
+                    score = self._evaluate_ethics_all(model_path, eval_dir, model_name)
+
+                # Reasoning tasks
+                elif benchmark == "bbh" or benchmark == "bbh_cot_fewshot":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "bbh_cot_fewshot", batch_size, metric="acc,none", num_fewshot=3)
+                elif benchmark == "commonsense_qa":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "commonsense_qa", batch_size, metric="acc,none")
+                elif benchmark == "piqa":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "piqa", batch_size, metric="acc,none")
+                elif benchmark == "drop":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "drop", batch_size, metric="f1,none")
+                elif benchmark == "strategyqa":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "bigbench_strategyqa_multiple_choice", batch_size, metric="acc,none")
+
+                # Emotional/Social tasks
+                elif benchmark == "eq_bench":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "eq_bench", batch_size, metric="acc,none")
+                elif benchmark == "moral_stories":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "moral_stories", batch_size, metric="acc,none")
+
+                # MMLU subjects
+                elif benchmark.startswith("mmlu_"):
+                    score = self._evaluate_task(model_path, eval_dir, model_name, benchmark, batch_size, metric="acc,none")
+                elif benchmark == "mmlu_subset":  # Legacy support
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "mmlu_elementary_mathematics", batch_size, metric="acc,none")
+
                 else:
                     logging.warning(f"⚠️  Unknown benchmark: {benchmark}")
                     continue
-                
+
                 model_results[benchmark] = score
                 logging.info(f"✅ {benchmark}: {score:.3f}")
-                
+
             except Exception as e:
                 logging.error(f"❌ Failed to evaluate {benchmark}: {str(e)}")
                 model_results[benchmark] = 0.0
-        
+
         self.results[model_name] = model_results
         return model_results
+
+    def _evaluate_task(self, model_path: str, eval_dir: str, model_name: str, task_name: str,
+                      batch_size: int, metric: str = "acc,none", num_fewshot: int = 0,
+                      timeout: int = 1800, trust_remote_code: bool = False,
+                      system_instruction: str = None) -> float:
+        """Generic task evaluation using lm_eval
+
+        Args:
+            model_path: Path to model
+            eval_dir: Directory for eval results
+            model_name: Name of model
+            task_name: lm_eval task name
+            batch_size: Batch size for evaluation
+            metric: Metric to extract from results
+            num_fewshot: Number of few-shot examples
+            timeout: Timeout in seconds
+            trust_remote_code: Whether to trust remote code
+            system_instruction: Optional system instruction to prepend to prompts
+
+        Returns:
+            Score for the specified metric
+        """
+
+        cmd = [
+            "python", "-m", "lm_eval",
+            "--model", "hf",
+            "--model_args", self._get_model_args(model_path),
+            "--tasks", task_name,
+            "--batch_size", str(batch_size),
+            "--num_fewshot", str(num_fewshot),
+            "--log_samples",
+            "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_{task_name}"),
+            "--verbosity", "DEBUG"
+        ]
+
+        # Only add gen_kwargs for generative tasks
+        generative_tasks = ["gsm8k", "drop", "bbh_cot_fewshot", "bbh_cot_zeroshot",
+                           "bigbench_strategyqa_multiple_choice"]
+        if any(gen_task in task_name for gen_task in generative_tasks):
+            cmd.extend(["--gen_kwargs", '{"max_new_tokens":null}'])
+
+        if trust_remote_code:
+            cmd.append("--trust_remote_code")
+
+        if system_instruction:
+            cmd.extend(["--system_instruction", system_instruction])
+
+        try:
+            logging.info(f"Running: {' '.join(cmd)}")
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+
+            # Stream output
+            for line in process.stdout:
+                print(line.strip())
+
+            process.wait(timeout=timeout)
+
+            # Parse results
+            output_dir = os.path.join(eval_dir, f"eval_results_{model_name}_{task_name}")
+            results_file = self._find_results_file(output_dir, task_name)
+
+            if results_file:
+                try:
+                    with open(results_file, 'r') as f:
+                        results = json.load(f)
+
+                    # Extract metric
+                    task_results = results.get('results', {}).get(task_name, {})
+                    score = task_results.get(metric, 0.0)
+
+                    return score
+
+                except (json.JSONDecodeError, KeyError, TypeError) as e:
+                    logging.warning(f"Failed to parse {task_name} results: {e}")
+                    return 0.0
+            else:
+                logging.error(f"Results file not found for {task_name}")
+                return 0.0
+
+        except subprocess.TimeoutExpired:
+            logging.error(f"{task_name} evaluation timed out")
+            if process:
+                process.kill()
+        except Exception as e:
+            logging.error(f"{task_name} evaluation failed: {e}")
+
+        return 0.0
+
+    def _evaluate_ethics_all(self, model_path: str, eval_dir: str, model_name: str) -> float:
+        """Evaluate all 5 ethics subtasks and return average
+
+        Returns average score across all ethics dimensions
+        """
+
+        ethics_tasks = [
+            'ethics_cm',
+            'ethics_deontology',
+            'ethics_justice',
+            'ethics_utilitarianism',
+            'ethics_virtue'
+        ]
+
+        scores = []
+        for task in ethics_tasks:
+            logging.info(f"📊 Evaluating {task}...")
+            batch_size = self.batch_sizes.get(task, 25)
+            score = self._evaluate_task(model_path, eval_dir, model_name, task, batch_size,
+                                       metric="acc,none", trust_remote_code=True)
+            scores.append(score)
+            logging.info(f"  ✅ {task}: {score:.3f}")
+
+        avg_score = sum(scores) / len(scores) if scores else 0.0
+        logging.info(f"📊 Ethics Average: {avg_score:.3f}")
+
+        return avg_score
     
     def _evaluate_gsm8k(self, model_path: str, eval_dir: str = ".", model_name: str = "model") -> float:
         """Evaluate on GSM8K math reasoning"""

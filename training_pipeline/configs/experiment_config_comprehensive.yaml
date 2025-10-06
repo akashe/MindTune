@@ -1,0 +1,67 @@
+# Comprehensive Experiment Configuration
+# Evaluates reasoning capabilities AND human understanding
+
+experiment:
+  name: "diary_personal_finetuning_comprehensive"
+  models_to_train: ["unified"]  # Single unified model (no reasoning/non-reasoning split)
+  save_results_to: "./experiment_results"
+
+  # Comprehensive benchmark suite
+  benchmarks_to_run:
+    # === REASONING CAPABILITIES ===
+    - "bbh"                              # Big Bench Hard (23 reasoning tasks) ⭐
+    - "commonsense_qa"                   # Common sense reasoning ⭐
+    - "piqa"                             # Physical interaction QA ⭐
+    - "drop"                             # Discrete reasoning over paragraphs ⭐
+    - "strategyqa"                       # Multi-hop reasoning ⭐
+    - "arc_easy"                         # Science reasoning (baseline)
+    - "hellaswag"                        # Sentence completion (baseline)
+
+    # === HUMAN UNDERSTANDING ===
+    # Social & Emotional
+    - "social_iqa"                       # Social situation reasoning ⭐
+    - "eq_bench"                         # Emotional intelligence ⭐
+    - "winogrande"                       # Contextual understanding
+
+    # Ethics & Morality (5 dimensions)
+    - "ethics_cm"                        # Commonsense morality ⭐
+    - "ethics_deontology"                # Rule-based ethics ⭐
+    - "ethics_justice"                   # Fairness reasoning ⭐
+    - "ethics_utilitarianism"            # Consequence-based ethics ⭐
+    - "ethics_virtue"                    # Character ethics ⭐
+    - "moral_stories"                    # Moral narratives ⭐
+
+    # MMLU Domain Knowledge
+    - "mmlu_philosophy"                  # Philosophy knowledge ⭐
+    - "mmlu_moral_scenarios"             # Applied ethics ⭐
+    - "mmlu_moral_disputes"              # Ethical debates ⭐
+    - "mmlu_high_school_psychology"      # Psychology knowledge ⭐
+    - "mmlu_formal_logic"                # Logical reasoning ⭐
+    - "mmlu_logical_fallacies"           # Critical thinking ⭐
+    - "mmlu_machine_learning"            # AI/ML concepts ⭐
+
+    # === BASELINE CHECKS ===
+    - "gsm8k"                            # Math (expect stable/decline)
+    - "truthfulqa_mc2"                   # Factual accuracy (expect stable/decline)
+
+# Data configuration
+data:
+  source: "json"
+  mongodb_uri: "mongodb://localhost:27017/"
+  json_path: "../data/exported_diary_data_6000.json"  # Update when you have 6K samples
+  test_size: 50
+  validation_split: 0.2
+  max_length: 2048
+
+# Evaluation configuration
+evaluation:
+  batch_size: 4  # Deprecated - using task-specific batch sizes in evaluator.py
+  num_fewshot: 0  # Zero-shot for pure model comparison (BBH uses 3-shot internally)
+  timeout: 1800
+  output_dir: "./eval_results"
+
+# WandB tracking
+wandb:
+  project: "finetune-my-diary"
+  entity: "akashe"
+  tags: ["diary", "personal-data", "comprehensive-eval", "reasoning", "human-understanding"]
