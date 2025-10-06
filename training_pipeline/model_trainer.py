@@ -162,7 +162,7 @@ class ModelTrainer:
 
             # Calculate eval/log steps based on dataset size estimate
             dataset_size = len(dataset['train'])
-            estimated_batch_size = 16  # Conservative estimate
+            estimated_batch_size = self.training_config.batch_size
             steps_per_epoch = dataset_size // estimated_batch_size
             eval_log_frequency = getattr(self.training_config, 'eval_log_frequency', 0.2)
             interval_steps = max(1, int(steps_per_epoch * eval_log_frequency))
@@ -188,8 +188,8 @@ class ModelTrainer:
 
         # Training arguments
         training_args = TrainingArguments(
-            # per_device_train_batch_size=self.training_config.batch_size,
-            # per_device_eval_batch_size=self.training_config.batch_size,
+            per_device_train_batch_size=self.training_config.batch_size,
+            per_device_eval_batch_size=self.training_config.batch_size,
             auto_find_batch_size = self.training_config.auto_find_batch_size,
             gradient_accumulation_steps=self.training_config.gradient_accumulation_steps,
             warmup_steps=self.training_config.warmup_steps,
@@ -226,8 +226,10 @@ class ModelTrainer:
             prediction_loss_only=True
         )
         
-        # Create callbacks list
-        callbacks = [EarlyStoppingCallback(early_stopping_patience=5)]
+        # # Create callbacks list
+        # callbacks = [EarlyStoppingCallback(early_stopping_patience=5)]
+
+        callbacks = [] # removing early callback because of small data size
 
         # Add dynamic eval steps callback for epoch-based training
         if use_epochs:

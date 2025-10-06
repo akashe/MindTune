@@ -18,14 +18,14 @@ training:
 
   # Training duration control
   use_epochs: true                    # true = epoch-based, false = step-based
-  num_train_epochs: 1                 # For epoch-based training
+  num_train_epochs: 3                 # For epoch-based training
   max_steps: 50                       # For step-based training
   eval_log_frequency: 0.2             # Eval/log at every 20% completion
 
   # Training parameters
   learning_rate: 0.0002
   batch_size: 32                      # Starting point for auto-detection
-  auto_find_batch_size: true          # Enable automatic batch size optimization
+  auto_find_batch_size: false          # Enable automatic batch size optimization
   gradient_accumulation_steps: 1
   warmup_steps: 5
 
@@ -44,8 +44,8 @@ training:
   remove_unused_columns: false
   dataloader_drop_last: true
   gradient_checkpointing: false     
-  fp16: true
-  bf16: false                       
+  fp16: false
+  bf16: true                       
   use_gradient_checkpointing: false
   evaluation_strategy: "steps"
   load_best_model_at_end: true

@@ -113,7 +113,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_gsm8k"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -174,7 +174,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_hellaswag"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -227,7 +227,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_arc_easy"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -280,7 +280,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_mmlu"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -334,7 +334,7 @@ class ModelEvaluator:
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_social_iqa"),
             "--verbosity", "DEBUG",
             "--trust_remote_code",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -387,7 +387,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_truthfulqa"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -440,7 +440,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_winogrande"),
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -494,7 +494,7 @@ class ModelEvaluator:
             "--output_path", os.path.join(eval_dir, f"eval_results_{model_name}_ethics"),
             "--verbosity", "DEBUG",
             "--trust_remote_code",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -548,7 +548,7 @@ class ModelEvaluator:
             "--log_samples",
             "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_hhh",
             "--verbosity", "DEBUG",
-            "--limit", "5"
+            "--gen_kwargs", '{"max_new_tokens":null}'
         ]
 
         try:
@@ -598,7 +598,7 @@ class ModelEvaluator:
             #     "--log_samples",
             #     "--output_path", f"eval_results_{os.path.basename(model_path) if model_path else 'model'}_ethics",
             #     "--verbosity", "DEBUG",
-            #     "--limit", "10"
+            #     "--gen_kwargs", '{"max_new_tokens":null}'
             # ]
 
             # try:

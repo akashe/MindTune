@@ -7,6 +7,7 @@ from mongodb_connection import DiaryDataManager
 from config import DataConfig
 import logging
 from typing import Dict, List, Tuple, Optional
+from copy import deepcopy
 
 class DataManager:
     def __init__(self, config: DataConfig):
@@ -63,15 +64,19 @@ class DataManager:
             self.raw_data = self.raw_data[:self.config.test_size]
             logging.info(f"🧪 Test mode: Using {len(self.raw_data)} examples")
         
-        # Split by template type
-        reasoning_data = [ex for ex in self.raw_data if ex.get('template') == 'reasoning']
-        general_data = [ex for ex in self.raw_data if ex.get('template') in ['general_knowledge', 'planning']]
+        # # Split by template type
+        # reasoning_data = [ex for ex in self.raw_data if ex.get('template') == 'reasoning']
+        # general_data = [ex for ex in self.raw_data if ex.get('template') in ['general_knowledge', 'planning']]
         
+        # Both reasoning and non-reasoning models have access to same data
+        reasoning_data = deepcopy(self.raw_data)
+        general_data = deepcopy(self.raw_data)
+
         logging.info(f"📊 Data split: {len(reasoning_data)} reasoning, {len(general_data)} general")
         
         # Prepare datasets for each model type
         datasets = {
-            'non_reasoning': self._prepare_non_reasoning_dataset(general_data + reasoning_data),
+            'non_reasoning': self._prepare_non_reasoning_dataset(general_data),
             'reasoning': self._prepare_reasoning_dataset(reasoning_data)
         }
         
