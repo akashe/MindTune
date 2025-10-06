@@ -117,12 +117,18 @@ class SFTDataGenerator:
             return 0  # Skip low quality
 
         elif quality_score < 0.7:  # Medium quality
-            if entry_length < 100:
+            if entry_length < 200:
                 return 1
-            elif entry_length < 300:
+            elif entry_length < 500:
                 return 2
-            else:
+            elif entry_length < 700:
                 return 3
+            elif entry_length < 1000:
+                return 4
+            elif entry_length < 1500:
+                return 8
+            else:
+                return 10
 
         else:  # High quality (>= 0.7)
             if entry_length < 100:
@@ -134,13 +140,13 @@ class SFTDataGenerator:
             elif entry_length < 500:
                 return 4
             elif entry_length < 700:
-                return 5
+                return 6
             elif entry_length < 1000:
-                return 7
+                return 9
             elif entry_length < 1500:
-                return 10
+                return 12
             else:
-                return 15
+                return 18
 
     def get_data_types_for_category(self, category: str, reasoning_type: str) -> List[str]:
         """Determine which data types to generate for this category"""
@@ -704,7 +710,7 @@ def main():
     generator = SFTDataGenerator(
         ollama_model="llama3.1:8b",
         mongo_manager=mongo,
-        version="2.5"  # V3: Generalized insights, no entry references, source_insight tracking
+        version="3.0"  # V3: Generalized insights, no entry references, source_insight tracking
     )
 
     # Process all entries

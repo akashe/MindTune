@@ -84,7 +84,7 @@ class DataManager:
     
     def _prepare_non_reasoning_dataset(self, data: List[Dict]) -> DatasetDict:
         """Prepare dataset for non-reasoning model (standard instruction tuning)"""
-        
+
         formatted_data = []
         for example in data:
             # Standard Alpaca format
@@ -107,22 +107,26 @@ class DataManager:
 
 ### Response:
 {example['output']}"""
-            
+
+            # Preserve data_type for stratified splitting
+            data_type = example.get('metadata', {}).get('data_type', 'unknown')
+
             formatted_data.append({
                 "text": text,
+                "data_type": data_type,
                 "template": example.get('template', 'unknown')
             })
-        
+
         return self._create_train_val_split(formatted_data)
     
     def _prepare_reasoning_dataset(self, data: List[Dict]) -> DatasetDict:
         """Prepare dataset for reasoning model (enhanced reasoning format)"""
-        
+
         formatted_data = []
         for example in data:
             # Enhanced reasoning format
             enhanced_output = self._enhance_reasoning_output(example['output'])
-            
+
             if example.get('input', '').strip():
                 text = f"""Below is an instruction that describes a task, paired with an input. Write a step-by-step response that shows your reasoning process.
 
@@ -142,12 +146,16 @@ class DataManager:
 
 ### Response:
 {enhanced_output}"""
-            
+
+            # Preserve data_type for stratified splitting
+            data_type = example.get('metadata', {}).get('data_type', 'unknown')
+
             formatted_data.append({
                 "text": text,
+                "data_type": data_type,
                 "template": "reasoning"
             })
-        
+
         return self._create_train_val_split(formatted_data)
     
     def _enhance_reasoning_output(self, output: str) -> str:
@@ -166,8 +174,8 @@ class DataManager:
         return enhanced
     
     def _create_train_val_split(self, data: List[Dict]) -> DatasetDict:
-        """Create train/validation split"""
-        
+        """Create stratified train/validation split by data_type"""
+
         if len(data) < 2:
             # Not enough data for split
             dataset = Dataset.from_list(data)
@@ -175,13 +183,48 @@ class DataManager:
                 "train": dataset,
                 "validation": dataset
             })
-        
-        train_data, val_data = train_test_split(
-            data, 
-            test_size=self.config.validation_split,
-            random_state=42
-        )
-        
+
+        # Extract data_type labels for stratification
+        data_types = [item.get('data_type', 'unknown') for item in data]
+
+        # Check if we have valid data_types
+        unique_types = set(data_types)
+        if len(unique_types) <= 1 or 'unknown' in unique_types:
+            # Fallback to random split if no data_type info
+            logging.warning("⚠️  No data_type found, using random split")
+            train_data, val_data = train_test_split(
+                data,
+                test_size=self.config.validation_split,
+                random_state=42
+            )
+        else:
+            # Stratified split by data_type
+            try:
+                train_data, val_data = train_test_split(
+                    data,
+                    test_size=self.config.validation_split,
+                    random_state=42,
+                    stratify=data_types
+                )
+                logging.info(f"✅ Created stratified split by data_type")
+
+                # Log distribution
+                from collections import Counter
+                train_types = Counter([item.get('data_type') for item in train_data])
+                val_types = Counter([item.get('data_type') for item in val_data])
+
+                logging.info(f"Train distribution: {dict(train_types)}")
+                logging.info(f"Val distribution: {dict(val_types)}")
+
+            except ValueError as e:
+                # Stratification failed (e.g., too few samples in some classes)
+                logging.warning(f"⚠️  Stratification failed: {e}, using random split")
+                train_data, val_data = train_test_split(
+                    data,
+                    test_size=self.config.validation_split,
+                    random_state=42
+                )
+
         return DatasetDict({
             "train": Dataset.from_list(train_data),
             "validation": Dataset.from_list(val_data)
