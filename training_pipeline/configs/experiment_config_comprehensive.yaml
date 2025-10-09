@@ -11,8 +11,8 @@ experiment:
     # === MODERN CHALLENGING REASONING (2024-2025) ===
     - "arc_challenge"                    # ✅ Science reasoning (harder than arc_easy)
     - "gpqa_diamond_zeroshot"            # ✅ PhD-level STEM (39% GPT-4) - very challenging
-    - "musr"                             # ✅ Multi-step soft reasoning (2024 benchmark)
-    - "minerva_math"                     # ✅ Mathematical reasoning (non-saturated)
+    - "leaderboard_musr"                             # ✅ Multi-step soft reasoning (2024 benchmark)
+    # - "minerva_math"                     # ✅ Mathematical reasoning (non-saturated)
 
     # === TRADITIONAL REASONING (still discriminative for 3B models) ===
     - "commonsense_qa"                   # Common sense reasoning

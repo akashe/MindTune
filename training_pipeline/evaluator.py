@@ -18,22 +18,22 @@ class ModelEvaluator:
         self.batch_sizes = {
             # Modern challenging benchmarks
             'arc_challenge': 200,        # Multiple choice science reasoning
-            'gpqa_diamond_zeroshot': 50, # PhD-level STEM (complex, long context)
-            'musr': 100,                 # Multi-step soft reasoning
-            'minerva_math': 32,          # Generative math (like GSM8K)
+            'gpqa_diamond_zeroshot': 25, # PhD-level STEM (complex, long context)
+            'leaderboard_musr': 25,                 # Multi-step soft reasoning
+            'minerva_math': 100,          # Generative math (like GSM8K)
 
             # Legacy benchmarks
             'gsm8k': 300,
             'hellaswag': 250,
             'arc_easy': 250,
-            'mmlu_elementary_mathematics': 250,
-            'mmlu_philosophy': 250,
-            'mmlu_moral_scenarios': 250,
-            'mmlu_moral_disputes': 250,
-            'mmlu_high_school_psychology': 250,
-            'mmlu_formal_logic': 250,
-            'mmlu_logical_fallacies': 250,
-            'mmlu_machine_learning': 250,
+            'mmlu_elementary_mathematics': 150,
+            'mmlu_philosophy': 150,
+            'mmlu_moral_scenarios': 150,
+            'mmlu_moral_disputes': 150,
+            'mmlu_high_school_psychology': 150,
+            'mmlu_formal_logic': 150,
+            'mmlu_logical_fallacies': 150,
+            'mmlu_machine_learning': 150,
             'social_iqa': 100,
             'truthfulqa_mc2': 150,
             'truthfulqa': 150,
@@ -48,10 +48,10 @@ class ModelEvaluator:
             'bbh_cot_fewshot': 16,  # Generative: few-shot examples + long reasoning
             'commonsense_qa': 200,
             'piqa': 200,
-            'drop': 32,             # Generative: reading comp with calculations
+            'drop': 20,             # Generative: reading comp with calculations
             'strategyqa': 150,
             'bigbench_strategyqa_multiple_choice': 150,
-            'eq_bench': 100,
+            'eq_bench': 50,
             'moral_stories': 150,
         }
 
@@ -141,8 +141,8 @@ class ModelEvaluator:
                     score = self._evaluate_task(model_path, eval_dir, model_name, "arc_challenge", batch_size, metric="acc_norm,none")
                 elif benchmark == "gpqa_diamond_zeroshot":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "gpqa_diamond_zeroshot", batch_size, metric="acc,none")
-                elif benchmark == "musr":
-                    score = self._evaluate_task(model_path, eval_dir, model_name, "musr", batch_size, metric="acc,none")
+                elif benchmark == "leaderboard_musr":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "musr", batch_size, metric="acc_norm,none")
                 elif benchmark == "minerva_math":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "minerva_math", batch_size, metric="exact_match,none")
 
@@ -162,7 +162,7 @@ class ModelEvaluator:
 
                 # Emotional/Social tasks
                 elif benchmark == "eq_bench":
-                    score = self._evaluate_task(model_path, eval_dir, model_name, "eq_bench", batch_size, metric="acc,none")
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "eq_bench", batch_size, metric="eqbench,none")
                 elif benchmark == "moral_stories":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "moral_stories", batch_size, metric="acc,none")
 
