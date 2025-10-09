@@ -18,7 +18,7 @@ class ModelEvaluator:
         self.batch_sizes = {
             # Modern challenging benchmarks
             'arc_challenge': 200,        # Multiple choice science reasoning
-            'gpqa_diamond_zeroshot': 25, # PhD-level STEM (complex, long context)
+            'gpqa_diamond_zeroshot': 15, # PhD-level STEM (complex, long context)
             'leaderboard_musr': 25,                 # Multi-step soft reasoning
             'minerva_math': 100,          # Generative math (like GSM8K)
 
@@ -142,7 +142,7 @@ class ModelEvaluator:
                 elif benchmark == "gpqa_diamond_zeroshot":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "gpqa_diamond_zeroshot", batch_size, metric="acc,none")
                 elif benchmark == "leaderboard_musr":
-                    score = self._evaluate_task(model_path, eval_dir, model_name, "musr", batch_size, metric="acc_norm,none")
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "leaderboard_musr", batch_size, metric="acc_norm,none")
                 elif benchmark == "minerva_math":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "minerva_math", batch_size, metric="exact_match,none")
 
