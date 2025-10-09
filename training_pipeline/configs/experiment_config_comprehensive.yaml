@@ -6,22 +6,28 @@ experiment:
   models_to_train: ["unified"]  # Single unified model (no reasoning/non-reasoning split)
   save_results_to: "./experiment_results"
 
-  # Comprehensive benchmark suite
+  # Comprehensive benchmark suite (2025: non-saturated benchmarks only)
   benchmarks_to_run:
-    # === REASONING CAPABILITIES ===
-    - "bbh"                              # Big Bench Hard (23 reasoning tasks) ⭐
-    - "commonsense_qa"                   # Common sense reasoning ⭐
-    - "piqa"                             # Physical interaction QA ⭐
-    - "drop"                             # Discrete reasoning over paragraphs ⭐
-    - "strategyqa"                       # Multi-hop reasoning ⭐
-    - "arc_easy"                         # Science reasoning (baseline)
-    - "hellaswag"                        # Sentence completion (baseline)
+    # === MODERN CHALLENGING REASONING (2024-2025) ===
+    - "arc_challenge"                    # ✅ Science reasoning (harder than arc_easy)
+    - "gpqa_diamond_zeroshot"            # ✅ PhD-level STEM (39% GPT-4) - very challenging
+    - "musr"                             # ✅ Multi-step soft reasoning (2024 benchmark)
+    - "minerva_math"                     # ✅ Mathematical reasoning (non-saturated)
+
+    # === TRADITIONAL REASONING (still discriminative for 3B models) ===
+    - "commonsense_qa"                   # Common sense reasoning
+    - "piqa"                             # Physical interaction QA
+    - "strategyqa"                       # Multi-hop reasoning
+
+    # ❌ REMOVED: Saturated benchmarks (BBH, DROP, ARC-Easy, HellaSwag)
 
     # === HUMAN UNDERSTANDING ===
-    # Social & Emotional
-    - "social_iqa"                       # Social situation reasoning ⭐
-    - "eq_bench"                         # Emotional intelligence ⭐
-    - "winogrande"                       # Contextual understanding
+    # Social & Emotional (still discriminative for small models)
+    - "social_iqa"                       # Social situation reasoning ✅
+    - "winogrande"                       # Contextual understanding ✅
+
+    # EQ-Bench: Consider removing - too difficult for 3B models (you got -1.628 score)
+    - "eq_bench"                       # ❌ Too hard for small models (negative scores)
 
     # Ethics & Morality (5 dimensions)
     - "ethics_cm"                        # Commonsense morality ⭐

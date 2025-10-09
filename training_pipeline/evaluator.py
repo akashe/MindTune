@@ -13,9 +13,16 @@ class ModelEvaluator:
         self.results = {}
         self.output_dir = output_dir
 
-        # Task-specific batch sizes (empirically determined for Qwen 2.5 3B on A10 48GB)
-        # Scale these proportionally for different GPU/model combinations
+        # Task-specific batch sizes (empirically determined for Qwen 2.5 3B on A40 48GB)
+        # Modern benchmarks (2024-2025)
         self.batch_sizes = {
+            # Modern challenging benchmarks
+            'arc_challenge': 200,        # Multiple choice science reasoning
+            'gpqa_diamond_zeroshot': 50, # PhD-level STEM (complex, long context)
+            'musr': 100,                 # Multi-step soft reasoning
+            'minerva_math': 32,          # Generative math (like GSM8K)
+
+            # Legacy benchmarks
             'gsm8k': 300,
             'hellaswag': 250,
             'arc_easy': 250,
@@ -37,11 +44,11 @@ class ModelEvaluator:
             'ethics_utilitarianism': 25,
             'ethics_virtue': 25,
             'hendrycks_ethics': 25,
-            'bbh': 100,
-            'bbh_cot_fewshot': 100,
+            'bbh': 16,              # Generative: complex reasoning with long outputs
+            'bbh_cot_fewshot': 16,  # Generative: few-shot examples + long reasoning
             'commonsense_qa': 200,
             'piqa': 200,
-            'drop': 100,
+            'drop': 32,             # Generative: reading comp with calculations
             'strategyqa': 150,
             'bigbench_strategyqa_multiple_choice': 150,
             'eq_bench': 100,
@@ -129,17 +136,29 @@ class ModelEvaluator:
                 elif benchmark == "hendrycks_ethics":
                     score = self._evaluate_ethics_all(model_path, eval_dir, model_name)
 
-                # Reasoning tasks
-                elif benchmark == "bbh" or benchmark == "bbh_cot_fewshot":
-                    score = self._evaluate_task(model_path, eval_dir, model_name, "bbh_cot_fewshot", batch_size, metric="acc,none", num_fewshot=3)
+                # Modern challenging reasoning tasks (2024-2025)
+                elif benchmark == "arc_challenge":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "arc_challenge", batch_size, metric="acc_norm,none")
+                elif benchmark == "gpqa_diamond_zeroshot":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "gpqa_diamond_zeroshot", batch_size, metric="acc,none")
+                elif benchmark == "musr":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "musr", batch_size, metric="acc,none")
+                elif benchmark == "minerva_math":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "minerva_math", batch_size, metric="exact_match,none")
+
+                # Traditional reasoning tasks
                 elif benchmark == "commonsense_qa":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "commonsense_qa", batch_size, metric="acc,none")
                 elif benchmark == "piqa":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "piqa", batch_size, metric="acc,none")
-                elif benchmark == "drop":
-                    score = self._evaluate_task(model_path, eval_dir, model_name, "drop", batch_size, metric="f1,none")
                 elif benchmark == "strategyqa":
                     score = self._evaluate_task(model_path, eval_dir, model_name, "bigbench_strategyqa_multiple_choice", batch_size, metric="acc,none")
+
+                # Legacy/deprecated reasoning tasks (saturated)
+                elif benchmark == "bbh" or benchmark == "bbh_cot_fewshot":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "bbh_cot_fewshot", batch_size, metric="acc,none", num_fewshot=3)
+                elif benchmark == "drop":
+                    score = self._evaluate_task(model_path, eval_dir, model_name, "drop", batch_size, metric="f1,none")
 
                 # Emotional/Social tasks
                 elif benchmark == "eq_bench":
@@ -201,11 +220,24 @@ class ModelEvaluator:
             "--verbosity", "DEBUG"
         ]
 
-        # Only add gen_kwargs for generative tasks
-        generative_tasks = ["gsm8k", "drop", "bbh_cot_fewshot", "bbh_cot_zeroshot",
-                           "bigbench_strategyqa_multiple_choice"]
-        if any(gen_task in task_name for gen_task in generative_tasks):
-            cmd.extend(["--gen_kwargs", '{"max_new_tokens":null}'])
+        # Only add gen_kwargs for generative tasks with task-specific limits
+        generative_configs = {
+            # Modern benchmarks
+            "minerva_math": "null",    # Math reasoning: step-by-step solutions
+            "gpqa": "null",            # STEM Q&A: moderate explanations
+
+            # Legacy benchmarks
+            "gsm8k": "null",           # Math: moderate length for step-by-step + answer
+            "drop": 256,            # Reading comp: short answers with calculations
+            "bbh_cot_fewshot": 512, # Complex reasoning: longer chains
+            "bbh_cot_zeroshot": 512,
+            "bigbench_strategyqa_multiple_choice": "null"  # Yes/No with brief reasoning
+        }
+
+        for task_pattern, max_tokens in generative_configs.items():
+            if task_pattern in task_name:
+                cmd.extend(["--gen_kwargs", f'{{"max_new_tokens":{max_tokens}}}'])
+                break
 
         if trust_remote_code:
             cmd.append("--trust_remote_code")
