@@ -3,8 +3,8 @@ model:
   name: "non_reasoning"
   base_model: "Qwen/Qwen2.5-3B"
   max_seq_length: 2048
-  lora_r: 32
-  lora_alpha: 64
+  lora_r: 64
+  lora_alpha: 32
   lora_dropout: 0.051
   target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
   use_cache: false                    # Disable KV cache for training
@@ -18,13 +18,13 @@ training:
 
   # Training duration control
   use_epochs: true                    # true = epoch-based, false = step-based
-  num_train_epochs: 3                 # For epoch-based training
+  num_train_epochs: 1                 # For epoch-based training
   max_steps: 50                       # For step-based training
   eval_log_frequency: 0.2             # Eval/log at every 20% completion
 
   # Training parameters
   learning_rate: 0.0002
-  batch_size: 32                      # Starting point for auto-detection
+  batch_size: 200                      # Starting point for auto-detection
   auto_find_batch_size: false          # Enable automatic batch size optimization
   gradient_accumulation_steps: 1
   warmup_steps: 5
