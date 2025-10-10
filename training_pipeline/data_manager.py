@@ -54,44 +54,36 @@ class DataManager:
         return data
     
     def prepare_datasets(self, test_mode: bool = False) -> Dict[str, DatasetDict]:
-        """Prepare training datasets for both model types"""
-        
+        """Prepare training dataset with clean, simple formatting"""
+
         # Load raw data
         self.raw_data = self.load_data()
-        
+
         # Use subset for testing
         if test_mode:
             self.raw_data = self.raw_data[:self.config.test_size]
             logging.info(f"🧪 Test mode: Using {len(self.raw_data)} examples")
-        
-        # # Split by template type
-        # reasoning_data = [ex for ex in self.raw_data if ex.get('template') == 'reasoning']
-        # general_data = [ex for ex in self.raw_data if ex.get('template') in ['general_knowledge', 'planning']]
-        
-        # Both reasoning and non-reasoning models have access to same data
-        reasoning_data = deepcopy(self.raw_data)
-        general_data = deepcopy(self.raw_data)
 
-        logging.info(f"📊 Data split: {len(reasoning_data)} reasoning, {len(general_data)} general")
-        
-        # Prepare datasets for each model type
+        logging.info(f"📊 Total examples: {len(self.raw_data)}")
+
+        # Prepare single unified dataset
+        dataset = self._prepare_dataset(self.raw_data)
+
+        # Return in dict format for compatibility (but only one model type now)
         datasets = {
-            'non_reasoning': self._prepare_non_reasoning_dataset(general_data),
-            'reasoning': self._prepare_reasoning_dataset(reasoning_data)
+            'unified': dataset
         }
-        
+
         return datasets
     
-    def _prepare_non_reasoning_dataset(self, data: List[Dict]) -> DatasetDict:
-        """Prepare dataset for non-reasoning model (standard instruction tuning)"""
+    def _prepare_dataset(self, data: List[Dict]) -> DatasetDict:
+        """Prepare dataset with clean, simple formatting - no verbose system prompts"""
 
         formatted_data = []
         for example in data:
-            # Standard Alpaca format
+            # Simple, clean format - just instruction, input (if present), and response
             if example.get('input', '').strip():
-                text = f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-### Instruction:
+                text = f"""### Instruction:
 {example['instruction']}
 
 ### Input:
@@ -100,9 +92,7 @@ class DataManager:
 ### Response:
 {example['output']}"""
             else:
-                text = f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
-
-### Instruction:
+                text = f"""### Instruction:
 {example['instruction']}
 
 ### Response:
@@ -113,65 +103,10 @@ class DataManager:
 
             formatted_data.append({
                 "text": text,
-                "data_type": data_type,
-                "template": example.get('template', 'unknown')
+                "data_type": data_type
             })
 
         return self._create_train_val_split(formatted_data)
-    
-    def _prepare_reasoning_dataset(self, data: List[Dict]) -> DatasetDict:
-        """Prepare dataset for reasoning model (enhanced reasoning format)"""
-
-        formatted_data = []
-        for example in data:
-            # Enhanced reasoning format
-            enhanced_output = self._enhance_reasoning_output(example['output'])
-
-            if example.get('input', '').strip():
-                text = f"""Below is an instruction that describes a task, paired with an input. Write a step-by-step response that shows your reasoning process.
-
-### Instruction:
-{example['instruction']}
-
-### Input:
-{example['input']}
-
-### Response:
-{enhanced_output}"""
-            else:
-                text = f"""Below is an instruction that describes a task. Write a step-by-step response that shows your reasoning process.
-
-### Instruction:
-{example['instruction']}
-
-### Response:
-{enhanced_output}"""
-
-            # Preserve data_type for stratified splitting
-            data_type = example.get('metadata', {}).get('data_type', 'unknown')
-
-            formatted_data.append({
-                "text": text,
-                "data_type": data_type,
-                "template": "reasoning"
-            })
-
-        return self._create_train_val_split(formatted_data)
-    
-    def _enhance_reasoning_output(self, output: str) -> str:
-        """Enhance reasoning output format"""
-        
-        # Convert mechanical steps to more natural reasoning
-        enhanced = output.replace("Step 1:", "\n**Analysis:**")
-        enhanced = enhanced.replace("Step 2:", "\n**Approach:**")
-        enhanced = enhanced.replace("Step 3:", "\n**Implementation:**")
-        enhanced = enhanced.replace("Conclusion:", "\n**Conclusion:**")
-        
-        # Add reasoning preamble if not present
-        if not enhanced.startswith("Let me think"):
-            enhanced = "Let me think through this systematically:\n" + enhanced
-        
-        return enhanced
     
     def _create_train_val_split(self, data: List[Dict]) -> DatasetDict:
         """Create stratified train/validation split by data_type"""

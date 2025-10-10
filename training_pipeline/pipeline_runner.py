@@ -88,21 +88,24 @@ class ExperimentPipeline:
     
     def _train_models(self, datasets: Dict) -> Dict[str, str]:
         """Train all specified models"""
-        
+
         trained_models = {}
         models_to_train = self.config['experiment']['models_to_train']
-        
+
+        # Use unified dataset for all models
+        unified_dataset = datasets.get('unified', datasets.get('non_reasoning'))
+
         for model_type in models_to_train:
             logging.info(f"🤖 Training {model_type} model...")
-            
+
             # Get configurations
             model_config = self.config_manager.get_model_config(model_type)
             training_config = self.config_manager.get_training_config(model_type, self.test_mode)
-            
-            # Setup and train
+
+            # Setup and train - all models use same unified dataset now
             trainer = ModelTrainer(model_config, training_config, self.experiment_name)
-            model_path, experiment_dir = trainer.train(datasets[model_type], model_type)
-            
+            model_path, experiment_dir = trainer.train(unified_dataset, model_type)
+
             trained_models[model_type] = model_path
             logging.info(f"✅ {model_type} training complete: {model_path}")
 

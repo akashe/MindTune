@@ -9,7 +9,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from data_processing.retrieve_notes import retrieve_notes
+# from data_processing.retrieve_notes import retrieve_notes
 from unsloth import FastLanguageModel
 from trl import SFTTrainer
 from transformers import TrainingArguments
@@ -43,16 +43,18 @@ class PureSFTTrainer:
         """Load raw diary entries from PersonalNotes."""
         logging.info("📖 Loading diary entries...")
 
-        docs = retrieve_notes()
+        # docs = retrieve_notes()
+        with open('/home/ubuntu/MindTune/data/all_notes.json', 'r') as f:
+            docs = json.load(f)
 
         # Convert to list of dicts
         entries = []
         for doc in docs:
-            entry_text = doc.page_content.strip()
-            source = doc.metadata.get('source', 'unknown')
+            entry_text = doc["page_content"].strip()
+            source = doc['source']
 
             # Filter out very short entries (< 100 chars - likely headers/metadata)
-            if len(entry_text) < 100:
+            if len(entry_text) < 50:
                 continue
 
             entries.append({
@@ -103,14 +105,55 @@ class PureSFTTrainer:
 
         logging.info("✅ Model loaded with LoRA adapters (FP16)")
 
-    def prepare_training_data(self, entries: List[Dict], train_split: float = 0.95):
-        """Prepare data for pure causal language modeling."""
-        logging.info(f"🔧 Preparing training data...")
+    def prepare_training_data(self, entries: List[Dict], train_split: float = 0.95, chunk_overlap: int = 256):
+        """Prepare data with chunking for long entries to avoid truncation."""
+        logging.info(f"🔧 Preparing training data with chunking...")
 
-        # Format: Just raw text for continuation
+        # Tokenize and chunk entries
         formatted_data = []
+        total_chunks = 0
+        truncated_entries = 0
+
         for entry in entries:
-            formatted_data.append({"text": entry['text']})
+            text = entry['text']
+
+            # Tokenize to check length
+            tokens = self.tokenizer(text, truncation=False, return_tensors=None)
+            num_tokens = len(tokens['input_ids'])
+
+            if num_tokens <= self.max_seq_length:
+                # Entry fits - use as is
+                formatted_data.append({"text": text})
+                total_chunks += 1
+            else:
+                # Entry too long - split into overlapping chunks
+                truncated_entries += 1
+
+                # Calculate chunk size (leave room for overlap)
+                chunk_size = self.max_seq_length - chunk_overlap
+
+                # Split by tokens, not characters
+                input_ids = tokens['input_ids']
+
+                # Create overlapping chunks
+                num_chunks = 0
+                for i in range(0, len(input_ids), chunk_size):
+                    chunk_ids = input_ids[i:i + self.max_seq_length]
+
+                    # Decode chunk back to text
+                    chunk_text = self.tokenizer.decode(chunk_ids, skip_special_tokens=True)
+
+                    formatted_data.append({"text": chunk_text})
+                    num_chunks += 1
+
+                total_chunks += num_chunks
+                logging.debug(f"Split entry ({num_tokens} tokens) into {num_chunks} chunks")
+
+        logging.info(f"📊 Chunking stats:")
+        logging.info(f"   Original entries: {len(entries)}")
+        logging.info(f"   Entries that needed chunking: {truncated_entries}")
+        logging.info(f"   Total chunks created: {total_chunks}")
+        logging.info(f"   Data expansion: {total_chunks / len(entries):.2f}x")
 
         # Create dataset
         dataset = Dataset.from_list(formatted_data)
@@ -132,7 +175,8 @@ class PureSFTTrainer:
               learning_rate: float = 2e-4,
               gradient_accumulation_steps: int = 4,
               lora_r: int = 16,
-              lora_alpha: int = 16):
+              lora_alpha: int = 16,
+              chunk_overlap: int = 256):
         """Train model on pure diary text."""
 
         # Load data
@@ -144,8 +188,8 @@ class PureSFTTrainer:
         # Setup model
         self.setup_model(lora_r=lora_r, lora_alpha=lora_alpha)
 
-        # Prepare datasets
-        datasets = self.prepare_training_data(entries)
+        # Prepare datasets with chunking
+        datasets = self.prepare_training_data(entries, chunk_overlap=chunk_overlap)
 
         # Training arguments
         training_args = TrainingArguments(
@@ -261,6 +305,7 @@ def main():
     parser.add_argument("--gradient_accumulation", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--lora_r", type=int, default=16, help="LoRA rank")
     parser.add_argument("--lora_alpha", type=int, default=16, help="LoRA alpha")
+    parser.add_argument("--chunk_overlap", type=int, default=256, help="Token overlap between chunks for long entries")
 
     args = parser.parse_args()
 
@@ -276,7 +321,8 @@ def main():
         learning_rate=args.learning_rate,
         gradient_accumulation_steps=args.gradient_accumulation,
         lora_r=args.lora_r,
-        lora_alpha=args.lora_alpha
+        lora_alpha=args.lora_alpha,
+        chunk_overlap=args.chunk_overlap
     )
 
 
